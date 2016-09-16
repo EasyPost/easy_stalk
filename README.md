@@ -56,7 +56,7 @@ class AdvancedTextPrintingJob < EasyStalk::Job
   serializable_context_keys :string_to_print, :scheduled_at
 
   tube_name "custom_tube" # defaults to the class name
-  tube_prefix "pref" # defaults to ENV['BEANSTALKD_TUBE_PREFIX']
+  tube_prefix "custom.tube.prefix." # defaults to ENV['BEANSTALKD_TUBE_PREFIX']
   priority 20 # defaults to 500. 0 is highest priority
   time_to_run 30 # defaults to 120 seconds
   delay (60 * 5) # defaults to 0 seconds
