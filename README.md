@@ -19,7 +19,7 @@ By default, the job's default time_to_run, priority, and delay will be used, and
 
 You can override this behavior explicitly by passing in custom values:
 ```ruby
-pri = 1 # Lower is higher priority 
+pri = 1 # Lower is higher priority
 ttr = 10 # seconds to run the job for
 wait_time = 5 # seconds to wait until job is ready. NOTE: gets overridden if delay_until is present
 tomorrow = DateTime.now + 1 # target datetime used to calculate delay
@@ -36,17 +36,17 @@ Enqueing the Job will place it in the queue, with the appropriate settings and d
 ```ruby
 class TextPrintingJob < EasyStalk::Job
   serializable_context_keys :string_to_print, :scheduled_at
-  
+
   def call
     text = context.string_to_print
     enqueued_time = context.scheduled_at
-    
-    puts "Job enqueued at #{enqueued_time} is running and saying #{text}" 
+
+    puts "Job enqueued at #{enqueued_time} is running and saying #{text}"
   end
 end
 
 # To enqueue the job
-Beanstalk::Client.enqueue(TextPrintingJob.new({string_to_print: "Hello World!", scheduled_at: DateTime.now})
+EasyStalk::Client.enqueue(TextPrintingJob.new({string_to_print: "Hello World!", scheduled_at: DateTime.now}))
 ```
 
 You can further customize/override a number of settings:
@@ -54,13 +54,13 @@ You can further customize/override a number of settings:
 ```ruby
 class AdvancedTextPrintingJob < EasyStalk::Job
   serializable_context_keys :string_to_print, :scheduled_at
-  
+
   tube_name "custom_tube" # defaults to the class name
   tube_prefix "pref" # defaults to ENV['BEANSTALKD_TUBE_PREFIX']
   priority 20 # defaults to 500. 0 is highest priority
   time_to_run 30 # defaults to 120 seconds
   delay (60 * 5) # defaults to 0 seconds
-  
+
   def call
     # Some awesome job logic
   end
@@ -74,14 +74,26 @@ To test your jobs, you can simply treat them as Interactors, and run `TextPrinti
 The worker can be started by running work_jobs and passing in the job class to work.
 
 ```ruby
-EasyStalk::Worker.new().work_jobs(YourJobCLass)
+EasyStalk::Worker.new().work_jobs(YourJobClass)
 ```
 
+This method currently watches a Job class's tube, running the Job as needed.
+If a Job raises an exception, or otherwise is failed using Interactor's context.fail! method, it will retry up to 5 times with a modified cubic backoff with random delta.
+
+
+You can also require the rake tasks in your Rakefile
+```ruby
+require 'easy_stalk/tasks'
+```
+Which will let you start a worker with the following syntax
+```
+$ rake easy_stalk:work_jobs[tubename]
+```
 
 ## Other notes
 
 You can set `EasyStalk.logger` with your desired logger instance for some pitiful output.
-You can view all defined job classes with `Beanstalk::Job.descendants`
+You can view all defined job classes with `EasyStalk::Job.descendants`
 Pull requests / feedback welcome!
 
 More docs coming soon!
@@ -92,4 +104,4 @@ More docs coming soon!
 * break out descendant tracking into a separate gem?
 * add in raketasks
 * add in docs for usage (including config logging)
-* improve worker configurability 
+* improve worker configurability (custom retry backoff, retry count, etc)

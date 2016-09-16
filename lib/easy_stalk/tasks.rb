@@ -2,7 +2,7 @@
 # will give you the rake tasks
 
 namespace :easy_stalk do
-  # rake jobs:work[tubename]
+  # rake easy_stalk:work_jobs[tubename]
   desc "Start EasyStalk workers on the passed in tubes"
   task :work_jobs => :environment do |task, args|
     tubes = args.extras
