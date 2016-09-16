@@ -46,7 +46,6 @@ class TextPrintingJob < EasyStalk::Job
 end
 
 # To enqueue the job
-```
 EasyStalk::Client.enqueue(TextPrintingJob.new({string_to_print: "Hello World!", scheduled_at: DateTime.now}))
 ```
 
