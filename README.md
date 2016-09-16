@@ -46,6 +46,7 @@ class TextPrintingJob < EasyStalk::Job
 end
 
 # To enqueue the job
+```
 EasyStalk::Client.enqueue(TextPrintingJob.new({string_to_print: "Hello World!", scheduled_at: DateTime.now}))
 ```
 
@@ -80,10 +81,10 @@ EasyStalk::Worker.new().work_jobs(YourJobClass)
 This method currently watches a Job class's tube, running the Job as needed.
 If a Job raises an exception, or otherwise is failed using Interactor's context.fail! method, it will retry up to 5 times with a modified cubic backoff with random delta.
 
-
 You can also require the rake tasks in your Rakefile
 ```ruby
 require 'easy_stalk/tasks'
+
 ```
 Which will let you start a worker with the following syntax
 ```
