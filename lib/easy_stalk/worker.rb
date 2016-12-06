@@ -1,4 +1,5 @@
 require 'json'
+require 'interactor'
 require_relative 'client'
 require_relative 'job'
 
@@ -24,7 +25,13 @@ module EasyStalk
           # wait until next job available
           begin
             job = beanstalk.tubes.reserve(RESERVE_TIMEOUT)
-            result = job_class.call(JSON.parse(job.body))
+            begin
+              result = job_class.call(JSON.parse(job.body))
+            rescue => ex
+              result = Interactor::Context.build()
+              result.instance_variable_set(:@failure, true)
+              EasyStalk.logger.warn "Worker for #{job_class} on tube[#{job_class.tube_name}] raised #{ex.message}"
+            end
             if result.failure?
               if job.stats.releases < RETRY_TIMES
                 # Re-enqueue with stepped delay
