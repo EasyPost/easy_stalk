@@ -26,25 +26,25 @@ module EasyStalk
           begin
             job = beanstalk.tubes.reserve(RESERVE_TIMEOUT)
             begin
-              result = job_class.call(JSON.parse(job.body))
+              result = job_class.call!(JSON.parse(job.body))
             rescue => ex
-              result = Interactor::Context.build()
-              result.instance_variable_set(:@failure, true)
-              EasyStalk.logger.warn "Worker for #{job_class} on tube[#{job_class.tube_name}] raised #{ex.message}"
-            end
-            if result.failure?
+              # Job issued a failed context or raised an unhandled exception
               if job.stats.releases < RETRY_TIMES
                 # Re-enqueue with stepped delay
                 release_with_delay(job)
               else
                 job.bury
               end
+              if !ex.is_a?(Interactor::Failure)
+                EasyStalk.logger.error "Worker for #{job_class} on tube[#{job_class.tube_name}] failed #{ex.message}"
+                EasyStalk.logger.error ex.backtrace
+              end
             else
-              # Success!
+              # Job Succeeded!
               job.delete
             end
           rescue Beaneater::TimedOutError => e
-            # Tube is likely empty
+            # Failed to reserve a job, tube is likely empty
           end
         end
       end

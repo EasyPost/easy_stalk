@@ -50,7 +50,7 @@ describe EasyStalk::Worker do
         }.exactly(3).times
         expect { subject.work_jobs(job_instance.class) }.to_not raise_error
       end
-      specify "job exceptions will trigger a failure" do
+      specify "raising exception will trigger a failure" do
         stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
                             "BEANSTALKD_URLS" => "::mocked::"}
 
@@ -72,8 +72,8 @@ describe EasyStalk::Worker do
           end
           sample_job
         }.exactly(3).times
-        expect(job_instance.class).to receive(:call).exactly(3).times { raise "Boom" }
-        expect(EasyStalk.logger).to receive(:warn).exactly(3).times
+        expect(job_instance.class).to receive(:call!).exactly(3).times { raise "Boom" }
+        expect(EasyStalk.logger).to receive(:error).exactly(6).times
         expect { subject.work_jobs(job_instance.class) }.to_not raise_error
       end
     end
