@@ -11,7 +11,9 @@ module EasyStalk
     def work_jobs(job_class, on_fail: nil)
       raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
 
-      unless on_fail && on_fail.respond_to?(:call)
+      if on_fail && !on_fail.respond_to?(:call)
+        raise "on_fail handler does not respond to call"
+      else
         on_fail = Proc.new { |job_class, job_body, ex|
           EasyStalk.logger.error "Worker for #{job_class} on tube[#{job_class.tube_name}] failed #{ex.message}"
           EasyStalk.logger.error ex.backtrace.join("\n")

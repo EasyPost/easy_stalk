@@ -90,12 +90,8 @@ If you wish to override the job failure logging, you can pass in an object that 
 This will be passed the job class object, the job data as a string, and the exception that was raised for logging or alerting purposes.
 
 ```ruby
-EasyStalk::Worker.new().work_jobs(YourJobClass,
-                                  on_fail: Proc.new { |job_class, job_data, ex|
-                                             # Custom error logging or alerting
-                                             EasyStalk.logger.error "#{ex.message} - #{job_data}"
-                                           }
-)
+failure_handler = Proc.new { |job_class, job_data, ex| EasyStalk.logger.error "#{ex.message} - #{job_data}" }
+EasyStalk::Worker.new().work_jobs(YourJobClass, on_fail: failure_logger)
 ```
 
 
