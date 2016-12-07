@@ -14,7 +14,7 @@ module EasyStalk
       unless on_fail && on_fail.respond_to?(:call)
         on_fail = Proc.new { |job_class, job_body, ex|
           EasyStalk.logger.error "Worker for #{job_class} on tube[#{job_class.tube_name}] failed #{ex.message}"
-          EasyStalk.logger.error ex.backtrace
+          EasyStalk.logger.error ex.backtrace.join("\n")
         }
       end
 
