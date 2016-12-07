@@ -79,7 +79,11 @@ describe EasyStalk::Worker do
         expect { subject.work_jobs(job_instance.class) }.to_not raise_error
       end
 
-      specify "fail will call block if provided" do
+      specify "raises if on_fail doesn't respond to call" do
+        expect { subject.work_jobs(job_instance.class, on_fail: "Nop") }.to raise_error ArgumentError, "on_fail handler does not respond to call"
+      end
+
+      specify "fail will call on_fail handler if provided" do
         stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
                             "BEANSTALKD_URLS" => "::mocked::"}
 
@@ -108,7 +112,5 @@ describe EasyStalk::Worker do
         expect { subject.work_jobs(job_instance.class, on_fail: fail_proc) }.to_not raise_error
       end
     end
-
   end
-
 end
