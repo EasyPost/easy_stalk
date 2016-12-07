@@ -8,8 +8,15 @@ module EasyStalk
     RETRY_TIMES = 5
     RESERVE_TIMEOUT = 3
 
-    def work_jobs(job_class)
+    def work_jobs(job_class, on_fail: nil)
       raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
+
+      unless on_fail && on_fail.respond_to?(:call)
+        on_fail = Proc.new { |job_class, job_body, ex|
+          EasyStalk.logger.error "Worker for #{job_class} on tube[#{job_class.tube_name}] failed #{ex.message}"
+          EasyStalk.logger.error ex.backtrace
+        }
+      end
 
       register_signal_handlers!
       @cancelled = false
@@ -35,10 +42,7 @@ module EasyStalk
               else
                 job.bury
               end
-              if !ex.is_a?(Interactor::Failure)
-                EasyStalk.logger.error "Worker for #{job_class} on tube[#{job_class.tube_name}] failed #{ex.message}"
-                EasyStalk.logger.error ex.backtrace
-              end
+              on_fail.call(job_class, job.body, ex)
             else
               # Job Succeeded!
               job.delete
