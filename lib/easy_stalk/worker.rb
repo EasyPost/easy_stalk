@@ -1,4 +1,5 @@
 require 'json'
+require 'interactor'
 require_relative 'client'
 require_relative 'job'
 
@@ -7,8 +8,17 @@ module EasyStalk
     RETRY_TIMES = 5
     RESERVE_TIMEOUT = 3
 
-    def work_jobs(job_class)
+    def work_jobs(job_class, on_fail: nil)
       raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
+
+      if on_fail && !on_fail.respond_to?(:call)
+        raise ArgumentError, "on_fail handler does not respond to call"
+      elsif !on_fail
+        on_fail = Proc.new { |job_class, job_body, ex|
+          EasyStalk.logger.error "Worker for #{job_class} on tube[#{job_class.tube_name}] failed #{ex.message}"
+          EasyStalk.logger.error ex.backtrace.join("\n")
+        }
+      end
 
       register_signal_handlers!
       @cancelled = false
@@ -24,20 +34,23 @@ module EasyStalk
           # wait until next job available
           begin
             job = beanstalk.tubes.reserve(RESERVE_TIMEOUT)
-            result = job_class.call(JSON.parse(job.body))
-            if result.failure?
+            begin
+              result = job_class.call!(JSON.parse(job.body))
+            rescue => ex
+              # Job issued a failed context or raised an unhandled exception
               if job.stats.releases < RETRY_TIMES
                 # Re-enqueue with stepped delay
                 release_with_delay(job)
               else
                 job.bury
               end
+              on_fail.call(job_class, job.body, ex)
             else
-              # Success!
+              # Job Succeeded!
               job.delete
             end
           rescue Beaneater::TimedOutError => e
-            # Tube is likely empty
+            # Failed to reserve a job, tube is likely empty
           end
         end
       end

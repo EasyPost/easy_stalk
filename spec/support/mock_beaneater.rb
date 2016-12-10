@@ -30,6 +30,12 @@ module EasyStalk
         end
       end
     end
+    class TubeItemStats
+      attr_accessor :releases
+      def initialize(releases: 0)
+        @releases = releases
+      end
+    end
     class TubeItem
       attr_accessor :data, :pri, :ttr, :delay_until
       def initialize(data, pri, ttr, delay_until)
@@ -46,6 +52,11 @@ module EasyStalk
         end
       end
       def delete
+      end
+      def release(delay: 0)
+      end
+      def stats
+        TubeItemStats.new(releases: 1)
       end
     end
     def tubes
