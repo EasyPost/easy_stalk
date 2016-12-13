@@ -109,14 +109,14 @@ $ rake easy_stalk:work_jobs[tubename_a, tubename_b, etc.]
 When adding tests for your code you have the ability to run your tests via the standard beanstalk tube and workers, or to run the jobs immediately.
 To activate the immediate job runner you can add the following command to your test code (e.g. in the before hook):
 ```
-EasyStalk::Extensions::ImmediateJobRunner.activate
+EasyStalk::Extensions::ImmediateJobRunner.activate!
 ```
 To deactivate the immediate job runner you can add the following command to your test code (e.g. in the after hook):
 ```
-EasyStalk::Extensions::ImmediateJobRunner.deactivate
+EasyStalk::Extensions::ImmediateJobRunner.deactivate!
 ```
-Please note, after activate the ImmediateJobRunner all subsequent tests will be run immediately.
-Default behavior of the ImmediateJobRunner is to run through beanstalk and to be picked up by a worker.
+Please note, after activate the ImmediateJobRunner all subsequent jobs will be run immediately.
+Default behavior of the ImmediateJobRunner is to run through beanstalk and to be picked up by a worker.  Whereas when ImmediateJobRunner is activated beanstalk is bypassed and the job is run directly.
 
 ## Other notes
 

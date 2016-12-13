@@ -18,7 +18,7 @@ module EasyStalk
       end
     end
     class Tube
-      def put(data, pri: 0, ttr: 30, delay: 0, tube_name: 'defauilt')
+      def put(data, pri: 0, ttr: 30, delay: 0, tube_name: 'default')
         # no-op?
         @items ||= []
         @items << TubeItem.new(data, pri, ttr, Time.now + delay, tube_name)

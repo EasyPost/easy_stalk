@@ -31,8 +31,8 @@ module EasyStalk
         job_classes.each do |job_class|
           beanstalk.tubes.watch!(job_class.tube_name)
           tube_class_hash[job_class.tube_name] = job_class
-          EasyStalk.logger.info "Watching tube #{beanstalk.tubes.watched} for jobs"
         end
+        EasyStalk.logger.info "Watching tube #{beanstalk.tubes.watched} for jobs"
 
         # TODO: we can likely do without this cancelled protection
         # Worse case scenario, we call the interactor, but the job gets re-enqueued when
@@ -62,9 +62,8 @@ module EasyStalk
           end
         end
       end
-      job_classes.each do |job_class|
-        EasyStalk.logger.info "Worker for #{job_class} on tube[#{job_class.tube_name}] stopped"
-      end
+
+      EasyStalk.logger.info "#{job_classes.map{|job_class| "Worker #{job_class} on tube:[ #{job_class.tube_name}]"}.join(" and ")} stopped"
     end
 
     private

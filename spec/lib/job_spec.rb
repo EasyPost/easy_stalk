@@ -164,7 +164,7 @@ describe EasyStalk::Job do
     describe '.enqueue' do
       context 'when ImmediateJobRunner is active' do
         before do
-          EasyStalk::Extensions::ImmediateJobRunner.activate
+          EasyStalk::Extensions::ImmediateJobRunner.activate!
         end
 
         it 'raises NotImplementedError' do
@@ -172,7 +172,7 @@ describe EasyStalk::Job do
         end
 
         after do
-          EasyStalk::Extensions::ImmediateJobRunner.deactivate
+          EasyStalk::Extensions::ImmediateJobRunner.deactivate!
         end
       end
     end

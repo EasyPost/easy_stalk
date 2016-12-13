@@ -7,11 +7,11 @@ module EasyStalk
         @active
       end
 
-      def self.activate
+      def self.activate!
         @active = true
       end
 
-      def self.deactivate
+      def self.deactivate!
         @active = false
       end
     end
