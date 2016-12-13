@@ -1,5 +1,5 @@
 require_relative '../../lib/easy_stalk/job'
-require_relative 'immediate_job_runner'
+require_relative '../../lib/test/immediate_job_runner'
 
 module EasyStalk
   module Extensions
