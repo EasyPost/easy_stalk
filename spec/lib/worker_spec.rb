@@ -36,10 +36,11 @@ describe EasyStalk::Worker do
         beanstalk = EasyStalk::MockBeaneater.new
         mocked_client = ConnectionPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
+        tubes.watch!(ValidJob)
         expect(ConnectionPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
         expect(tubes).to receive(:watch!).with(job_instance.class.tube_name)
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil)
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
           if @count < 2
@@ -64,7 +65,7 @@ describe EasyStalk::Worker do
         expect(ConnectionPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
         expect(tubes).to receive(:watch!).with(job_instance.class.tube_name)
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil)
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
           if @count < 2
@@ -95,7 +96,7 @@ describe EasyStalk::Worker do
         expect(ConnectionPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
         expect(tubes).to receive(:watch!).with(job_instance.class.tube_name)
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil)
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
           if @count < 2

@@ -18,10 +18,10 @@ module EasyStalk
       end
     end
     class Tube
-      def put(data, pri: 0, ttr: 30, delay: 0)
+      def put(data, pri: 0, ttr: 30, delay: 0, tube_name: 'defauilt')
         # no-op?
         @items ||= []
-        @items << TubeItem.new(data, pri, ttr, Time.now + delay)
+        @items << TubeItem.new(data, pri, ttr, Time.now + delay, tube_name)
       end
       def pop
         (@items ||= []).sort!
@@ -38,11 +38,14 @@ module EasyStalk
     end
     class TubeItem
       attr_accessor :data, :pri, :ttr, :delay_until
-      def initialize(data, pri, ttr, delay_until)
-        @data, @pri, @ttr, @delay_until = data, pri, ttr, delay_until
+      def initialize(data, pri, ttr, delay_until, tube_name)
+        @data, @pri, @ttr, @delay_until, @tube_name = data, pri, ttr, delay_until, tube_name
       end
       def body
         @data
+      end
+      def tube
+        @tube_name
       end
       def <=>(other)
         if @delay_until < Time.now && other.delay_until < Time.now

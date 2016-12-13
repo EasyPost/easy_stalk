@@ -8,8 +8,10 @@ module EasyStalk
     RETRY_TIMES = 5
     RESERVE_TIMEOUT = 3
 
-    def work_jobs(job_class, on_fail: nil)
-      raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
+    def work_jobs(*job_classes, on_fail: nil)
+      job_classes.each do |job_class|
+        raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
+      end
 
       if on_fail && !on_fail.respond_to?(:call)
         raise ArgumentError, "on_fail handler does not respond to call"
@@ -23,9 +25,14 @@ module EasyStalk
       register_signal_handlers!
       @cancelled = false
 
+      tube_class_hash = {}
+
       EasyStalk::Client.instance.with do |beanstalk|
-        beanstalk.tubes.watch!(job_class.tube_name)
-        EasyStalk.logger.info "Watching tube #{beanstalk.tubes.watched} for jobs"
+        job_classes.each do |job_class|
+          beanstalk.tubes.watch!(job_class.tube_name)
+          tube_class_hash[job_class.tube_name] = job_class
+          EasyStalk.logger.info "Watching tube #{beanstalk.tubes.watched} for jobs"
+        end
 
         # TODO: we can likely do without this cancelled protection
         # Worse case scenario, we call the interactor, but the job gets re-enqueued when
@@ -35,6 +42,7 @@ module EasyStalk
           begin
             job = beanstalk.tubes.reserve(RESERVE_TIMEOUT)
             begin
+              job_class = tube_class_hash[job.tube]
               result = job_class.call!(JSON.parse(job.body))
             rescue => ex
               # Job issued a failed context or raised an unhandled exception
@@ -54,7 +62,9 @@ module EasyStalk
           end
         end
       end
-      EasyStalk.logger.info "Worker for #{job_class} on tube[#{job_class.tube_name}] stopped"
+      job_classes.each do |job_class|
+        EasyStalk.logger.info "Worker for #{job_class} on tube[#{job_class.tube_name}] stopped"
+      end
     end
 
     private
