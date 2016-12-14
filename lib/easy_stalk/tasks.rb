@@ -5,6 +5,8 @@ namespace :easy_stalk do
   # rake easy_stalk:work_jobs[tubename]
   desc "Start EasyStalk workers on the passed in tubes"
   task :work_jobs => :environment do |task, args|
+    ::Rails.application.eager_load! if defined?(::Rails)
+
     tubes = args.extras
     EasyStalk::Job.descendants.each do |job|
       if tubes.include?(job.tube_name)
