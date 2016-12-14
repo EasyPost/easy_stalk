@@ -113,5 +113,41 @@ describe EasyStalk::Worker do
         expect { subject.work_jobs(job_instance.class, on_fail: fail_proc) }.to_not raise_error
       end
     end
+
+    context "with  no job class" do
+      before do
+        class ValidJob < EasyStalk::Job
+          def call
+          end
+        end
+      end
+
+      let(:job_instance) { ValidJob.new }
+
+      specify do
+        stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
+                            "BEANSTALKD_URLS" => "::mocked::"}
+
+        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        EasyStalk::Client.instance_variable_set :@pool, nil
+        beanstalk = EasyStalk::MockBeaneater.new
+        mocked_client = ConnectionPool.new(size: 2, timeout: 30) { beanstalk }
+        tubes = EasyStalk::MockBeaneater::Tubes.new
+        tubes.watch!(ValidJob)
+        expect(ConnectionPool).to receive(:new).and_return mocked_client
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        expect(tubes).to receive(:reserve) {
+          @count ||= 0
+          if @count < 2
+            @count = @count + 1
+          else
+            subject.send :cleanup
+          end
+          sample_job
+        }.exactly(3).times
+        expect { subject.work_jobs() }.to_not raise_error
+      end
+    end
   end
 end

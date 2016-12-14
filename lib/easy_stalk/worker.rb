@@ -8,7 +8,15 @@ module EasyStalk
     RETRY_TIMES = 5
     RESERVE_TIMEOUT = 3
 
-    def work_jobs(*job_classes, on_fail: nil)
+    def work_jobs(job_classes = nil, on_fail: nil)
+      if job_classes == nil
+        job_classes = EasyStalk::Job.descendants
+      end
+
+      unless job_classes.instance_of?(Array)
+        job_classes = [job_classes]
+      end
+
       job_classes.each do |job_class|
         raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
       end
