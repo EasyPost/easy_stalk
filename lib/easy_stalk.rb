@@ -13,9 +13,8 @@ module EasyStalk
     end
 
     def configure
-      config = EasyStalk::Configuration.new
-      yield(config)
-      @configuration = config
+      @configuration = EasyStalk::Configuration.new
+      yield(@configuration) if block_given?
     end
   end
 end
