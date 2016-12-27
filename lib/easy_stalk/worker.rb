@@ -66,7 +66,8 @@ module EasyStalk
         end
       end
 
-      EasyStalk.logger.info "#{job_classes.map{|job_class| "Worker #{job_class} on tube:[ #{job_class.tube_name}]"}.join(" and ")} stopped"
+      jobs_list = job_classes.map { |job_class| "#{job_class} on tube #{job_class.tube_name}" }.join(", ")
+      EasyStalk.logger.info "Worker running #{jobs_list} has been stopped"
     end
 
     private
