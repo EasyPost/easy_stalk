@@ -16,9 +16,8 @@ Gem::Specification.new do |s|
     'lib/easy_stalk/descendant_tracking.rb',
     'lib/easy_stalk/job.rb',
     'lib/easy_stalk/tasks.rb',
-    'lib/easy_stalk/tasks.rb',
     'lib/easy_stalk/test.rb',
-    'lib/easy_stalk/test/immediate_job_runner.rb'
+    'lib/easy_stalk/test/immediate_job_runner.rb',
     'lib/easy_stalk/test/job.rb',
     'lib/easy_stalk/worker.rb'
   ]
