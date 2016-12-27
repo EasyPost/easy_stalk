@@ -13,4 +13,17 @@ describe EasyStalk::Configuration do
       expect(subject.logger).to eq "cat"
     end
   end
+
+  describe "#worker_on_fail" do
+    specify "gets the default logger" do
+      expect(subject.worker_on_fail).to be_a Proc
+    end
+  end
+  describe "#worker_on_fail=" do
+    specify "sets the default on_fail proc" do
+      subject.worker_on_fail = "cat"
+      expect(subject.worker_on_fail).to eq "cat"
+    end
+  end
+
 end
