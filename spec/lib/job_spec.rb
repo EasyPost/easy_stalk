@@ -97,6 +97,7 @@ describe EasyStalk::Job do
     end
 
     describe '.enqueue' do
+
       it 'properly enquques with defaults' do
         stub_const "ENV", {"BEANSTALKD_TUBE_PREFIX" => "rating.test."}
         conn = double
@@ -157,6 +158,22 @@ describe EasyStalk::Job do
         }
         MockJobWithKeys.new(:cat => "mew", "dog" => "wuf", :fish => "blu").
           enqueue(conn, priority: pri, time_to_run: ttr, delay: delay)
+      end
+    end
+
+    describe '.enqueue' do
+      context 'when ImmediateJobRunner is active' do
+        before do
+          EasyStalk::Extensions::ImmediateJobRunner.activate!
+        end
+
+        it 'raises NotImplementedError' do
+          expect { described_class.call }.to raise_error(NotImplementedError)
+        end
+
+        after do
+          EasyStalk::Extensions::ImmediateJobRunner.deactivate!
+        end
       end
     end
 

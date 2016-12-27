@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'easy_stalk'
-  s.version     = '0.0.4'
+  s.version     = '0.0.5'
   s.date        = '2016-09-15'
   s.summary     = 'EasyStalk - An easy way to use beanstalkd for jobs'
   s.description = 'A simple beanstalk client, worker, and job setup'
@@ -12,11 +12,14 @@ Gem::Specification.new do |s|
   s.add_dependency "interactor", '~> 3.1'
   s.files       = [
     'lib/easy_stalk.rb',
-    'lib/easy_stalk/job.rb',
     'lib/easy_stalk/client.rb',
-    'lib/easy_stalk/worker.rb',
     'lib/easy_stalk/descendant_tracking.rb',
+    'lib/easy_stalk/job.rb',
     'lib/easy_stalk/tasks.rb',
+    'lib/easy_stalk/test.rb',
+    'lib/easy_stalk/test/immediate_job_runner.rb',
+    'lib/easy_stalk/test/job.rb',
+    'lib/easy_stalk/worker.rb'
   ]
   s.homepage    = 'https://github.com/EasyPost/easy_stalk'
   s.license     = 'MIT'

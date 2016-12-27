@@ -77,10 +77,10 @@ EasyStalk::Client.enqueue(job_instance, priority: pri, time_to_run: ttr, delay: 
 
 ### EasyStalk::Worker
 
-The worker can be started by running work_jobs and passing in the job class to work.
+The worker can be started by running work_jobs and passing in job classes to work.
 
 ```ruby
-EasyStalk::Worker.new().work_jobs(YourJobClass)
+EasyStalk::Worker.new().work_jobs(YourJobClassA, YourJobClassB, etc.)
 ```
 
 This method currently watches a Job class's tube, running the Job as needed.
@@ -102,8 +102,21 @@ require 'easy_stalk/tasks'
 ```
 Which will let you start a worker with the following syntax
 ```
-$ rake easy_stalk:work_jobs[tubename]
+$ rake easy_stalk:work_jobs[tubename_a, tubename_b, etc.]
 ```
+
+## Testing
+When adding tests for your code you have the ability to run your tests via the standard beanstalk tube and workers, or to run the jobs immediately.
+To activate the immediate job runner you can add the following command to your test code (e.g. in the before hook):
+```
+EasyStalk::Extensions::ImmediateJobRunner.activate!
+```
+To deactivate the immediate job runner you can add the following command to your test code (e.g. in the after hook):
+```
+EasyStalk::Extensions::ImmediateJobRunner.deactivate!
+```
+Please note, after activate the ImmediateJobRunner all subsequent jobs will be run immediately.
+Default behavior of the ImmediateJobRunner is to run through beanstalk and to be picked up by a worker.  Whereas when ImmediateJobRunner is activated beanstalk is bypassed and the job is run directly.
 
 ## Other notes
 

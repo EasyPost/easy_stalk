@@ -16,4 +16,3 @@ require_relative 'easy_stalk/descendant_tracking'
 require_relative 'easy_stalk/job'
 require_relative 'easy_stalk/client'
 require_relative 'easy_stalk/worker'
-

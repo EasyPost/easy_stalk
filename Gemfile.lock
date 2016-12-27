@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    easy_stalk (0.0.4)
+    easy_stalk (0.0.5)
       beaneater (~> 1.0)
       connection_pool (~> 2.2)
       interactor (~> 3.1)
