@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.email       = 'dev@easypost.com'
 
   s.add_dependency "beaneater", '~> 1.0'
-  s.add_dependency "connection_pool", '~> 2.2'
+  s.add_dependency "ezpool", '~> 1.0'
   s.add_dependency "interactor", '~> 3.1'
   s.files       = [
     'lib/easy_stalk.rb',

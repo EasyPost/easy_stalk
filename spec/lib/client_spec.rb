@@ -26,8 +26,8 @@ describe EasyStalk::Client do
     it 'enqueues only EasyStalk Jobs' do
       stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
                           "BEANSTALKD_URLS" => "::mocked::"}
-      mocked_client = ConnectionPool.new(size: 2, timeout: 30) { EasyStalk::MockBeaneater.new }
-      expect(ConnectionPool).to receive(:new).and_return mocked_client
+      mocked_client = EzPool.new(size: 2, timeout: 30) { EasyStalk::MockBeaneater.new }
+      expect(EzPool).to receive(:new).and_return mocked_client
       class NonEasyStalkJob; end
       expect { subject.enqueue(NonEasyStalkJob.new) }.to raise_error ArgumentError
       class TestBeanstalkJob < EasyStalk::Job; end

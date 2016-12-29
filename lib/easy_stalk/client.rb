@@ -1,5 +1,5 @@
 require 'beaneater'
-require 'connection_pool'
+require 'ezpool'
 require_relative 'job'
 
 module EasyStalk
@@ -37,7 +37,7 @@ module EasyStalk
       if ENV['BEANSTALKD_TIMEOUT_SECONDS'].to_i > 0
         timeout_seconds = ENV['BEANSTALKD_TIMEOUT_SECONDS'].to_i
       end
-      instance = ConnectionPool.new(size: pool_size, timeout: timeout_seconds) do
+      instance = EzPool.new(size: pool_size, timeout: timeout_seconds) do
         Beaneater.new(random_beanstalkd_url)
       end
       instance
