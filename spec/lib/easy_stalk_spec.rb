@@ -8,7 +8,7 @@ describe "EasyStalk" do
         config.logger = doublog
       end
       expect(doublog).to be EasyStalk.logger
-      EasyStalk.configure
+      EasyStalk.configure # reset config
     end
   end
 end

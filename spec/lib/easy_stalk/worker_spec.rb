@@ -3,13 +3,16 @@ require 'spec_helper'
 describe EasyStalk::Worker do
 
   describe "self.work_jobs" do
-    before(:each) do
-      EasyStalk::Client.instance_variable_set :@pool, nil
-      EasyStalk::Client.instance_variable_set :@urls, nil
+    before do
+      EasyStalk.configure do |config|
+        config.pool_size = 12
+        config.timeout_seconds = 21
+        config.beanstalkd_urls = "::mocked::"
+      end
     end
-    after(:all) do
+    after do
+      EasyStalk.configure
       EasyStalk::Client.instance_variable_set :@pool, nil
-      EasyStalk::Client.instance_variable_set :@urls, nil
     end
 
     context "with an invalid job class" do
@@ -28,9 +31,6 @@ describe EasyStalk::Worker do
       it { expect { subject.work_jobs(job_instance) }.to raise_error ArgumentError, "#{job_instance} is not a valid EasyStalk::Job subclass" }
 
       specify do
-        stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
-                            "BEANSTALKD_URLS" => "::mocked::"}
-
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
         EasyStalk::Client.instance_variable_set :@pool, nil
         beanstalk = EasyStalk::MockBeaneater.new
@@ -54,9 +54,6 @@ describe EasyStalk::Worker do
       end
 
       specify "raising exception will trigger a failure" do
-        stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
-                            "BEANSTALKD_URLS" => "::mocked::"}
-
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
         EasyStalk::Client.instance_variable_set :@pool, nil
         beanstalk = EasyStalk::MockBeaneater.new
@@ -85,9 +82,6 @@ describe EasyStalk::Worker do
       end
 
       specify "fail will call on_fail handler if provided" do
-        stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
-                            "BEANSTALKD_URLS" => "::mocked::"}
-
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
         EasyStalk::Client.instance_variable_set :@pool, nil
         beanstalk = EasyStalk::MockBeaneater.new
@@ -114,7 +108,7 @@ describe EasyStalk::Worker do
       end
     end
 
-    context "with  no job class" do
+    context "with no job class" do
       before do
         class ValidJob < EasyStalk::Job
           def call
@@ -125,9 +119,6 @@ describe EasyStalk::Worker do
       let(:job_instance) { ValidJob.new }
 
       specify do
-        stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
-                            "BEANSTALKD_URLS" => "::mocked::"}
-
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
         EasyStalk::Client.instance_variable_set :@pool, nil
         beanstalk = EasyStalk::MockBeaneater.new

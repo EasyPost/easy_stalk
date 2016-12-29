@@ -4,28 +4,19 @@ describe EasyStalk::Client do
 
   describe "class << self" do
     subject { described_class }
-    before(:each) do
-      EasyStalk::Client.instance_variable_set :@pool, nil
-      EasyStalk::Client.instance_variable_set :@urls, nil
+    before do
+      EasyStalk.configure do |config|
+        config.pool_size = 12
+        config.timeout_seconds = 21
+        config.beanstalkd_urls = "::mocked::"
+      end
     end
-    after(:all) do
+    after do
+      EasyStalk.configure
       EasyStalk::Client.instance_variable_set :@pool, nil
-      EasyStalk::Client.instance_variable_set :@urls, nil
-    end
-
-    it 'uses the env specified values instead of default' do
-      urls = "test1.com:11300,test2.com:11300,test3.com:11300"
-      stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
-                          "BEANSTALKD_URLS" => urls}
-      expect(subject.instance.instance_variable_get(:@size)).to eq 12
-      expect(subject.instance.instance_variable_get(:@timeout)).to eq 21
-      expect(subject.beanstalkd_urls).to eq urls.split(",")
-      expect(subject.beanstalkd_urls).to include(subject.random_beanstalkd_url)
     end
 
     it 'enqueues only EasyStalk Jobs' do
-      stub_const "ENV", { "BEANSTALKD_POOL_SIZE" => "12", "BEANSTALKD_TIMEOUT_SECONDS" => "21",
-                          "BEANSTALKD_URLS" => "::mocked::"}
       mocked_client = ConnectionPool.new(size: 2, timeout: 30) { EasyStalk::MockBeaneater.new }
       expect(ConnectionPool).to receive(:new).and_return mocked_client
       class NonEasyStalkJob; end
