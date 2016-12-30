@@ -31,31 +31,56 @@ module EasyStalk
       }
 
       # FROM JOB
-      self.default_tube_prefix = ENV['BEANSTALKD_TUBE_PREFIX']
+      self.default_tube_prefix = ENV['BEANSTALKD_TUBE_PREFIX'] || DEFAULT_TUBE_PREFIX
       self.default_priority = DEFAULT_PRI
       self.default_time_to_run = DEFAULT_TTR
       self.default_delay = DEFAULT_DELAY
       self.default_serializable_context_keys = DEFAULT_SERIALIZABLE_KEYS
       # FROM CLIENT
       self.beanstalkd_urls = ENV['BEANSTALKD_URLS']
-      self.pool_size = ENV['BEANSTALKD_POOL_SIZE']
-      self.timeout_seconds = ENV['BEANSTALKD_TIMEOUT_SECONDS']
+      self.pool_size = ENV['BEANSTALKD_POOL_SIZE'] || DEFAULT_POOL_SIZE
+      self.timeout_seconds = ENV['BEANSTALKD_TIMEOUT_SECONDS'] || DEFAULT_TIMEOUT_SECONDS
     end
 
     def default_tube_prefix=(tube_prefix)
-      @default_tube_prefix = String === tube_prefix ? tube_prefix : DEFAULT_TUBE_PREFIX
+      if String === tube_prefix
+        @default_tube_prefix = tube_prefix
+      else
+        logger.warn "Invalid default_tube_prefix #{tube_prefix}. Using default."
+        @default_tube_prefix = DEFAULT_TUBE_PREFIX
+      end
     end
     def default_priority=(pri)
-      @default_priority = (pri.to_i > 0 && pri.to_i < 2**32) ? pri.to_i : DEFAULT_PRI
+      if pri.respond_to?(:to_i) && pri.to_i >= 0 && pri.to_i < 2**32
+        @default_priority = pri.to_i
+      else
+        logger.warn "Invalid default_priority #{pri}. Using default."
+        @default_priority = DEFAULT_PRI
+      end
     end
     def default_time_to_run=(ttr)
-      @default_time_to_run = ttr.to_i > 0 ? ttr.to_i : DEFAULT_TTR
-     end
+      if ttr.respond_to?(:to_i) && ttr.to_i > 0
+        @default_time_to_run = ttr.to_i
+      else
+        logger.warn "Invalid default_time_to_run #{ttr}. Using default."
+        @default_time_to_run = DEFAULT_TTR
+      end
+    end
     def default_delay=(delay)
-      @default_delay = delay.to_i > 0 ? delay.to_i : DEFAULT_DELAY
+      if delay.respond_to?(:to_i) && delay.to_i >= 0
+        @default_delay = delay.to_i
+      else
+        logger.warn "Invalid default_delay #{delay}. Using default."
+        @default_delay = DEFAULT_DELAY
+      end
     end
     def default_serializable_context_keys=(serializable_keys)
-      @default_serializable_context_keys = DEFAULT_SERIALIZABLE_KEYS
+      if Array === serializable_keys
+        @default_serializable_context_keys = serializable_keys
+      else
+        logger.warn "Invalid default_serializable_context_keys #{serializable_keys}. Using default."
+        @default_serializable_context_keys = DEFAULT_SERIALIZABLE_KEYS
+      end
     end
 
     def beanstalkd_urls=(urls)
@@ -65,11 +90,21 @@ module EasyStalk
     end
 
     def pool_size=(size)
-      @pool_size = size.to_i > 0 ? size.to_i : DEFAULT_POOL_SIZE
+      if size.respond_to?(:to_i) && size.to_i > 0
+        @pool_size = size.to_i
+      else
+        logger.warn "Invalid pool_size #{size}. Using default."
+        @pool_size = DEFAULT_POOL_SIZE
+      end
     end
 
     def timeout_seconds=(seconds)
-      @timeout_seconds = seconds.to_i > 0 ? seconds.to_i : DEFAULT_TIMEOUT_SECONDS
+      if seconds.respond_to?(:to_i) && seconds.to_i > 0
+        @timeout_seconds = seconds.to_i
+      else
+        logger.warn "Invalid timeout_seconds #{seconds}. Using default."
+        @timeout_seconds = DEFAULT_TIMEOUT_SECONDS
+      end
     end
 
   end

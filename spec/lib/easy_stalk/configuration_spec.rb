@@ -52,11 +52,11 @@ describe EasyStalk::Configuration do
       # integer < 2**32. 0 is highest
       subject.default_priority = 1
       expect(subject.default_priority).to eq 1
+      expect(subject.logger).to receive(:warn) { }
       subject.default_priority = -1
-      # todo: expect log warning
       expect(subject.default_priority).to eq described_class::DEFAULT_PRI
+      expect(subject.logger).to receive(:warn) { }
       subject.default_priority = 2**32 + 1 # 2**32 is beanstalk max
-      # todo: expect log warning
       expect(subject.default_priority).to eq described_class::DEFAULT_PRI
     end
   end
@@ -70,12 +70,16 @@ describe EasyStalk::Configuration do
     specify "only accepts positive numbers" do
       subject.default_time_to_run = 1
       expect(subject.default_time_to_run).to eq 1
+      expect(subject.logger).to receive(:warn) { }
       subject.default_time_to_run = 0
       expect(subject.default_time_to_run).to eq described_class::DEFAULT_TTR
+      expect(subject.logger).to receive(:warn) { }
       subject.default_time_to_run = nil
       expect(subject.default_time_to_run).to eq described_class::DEFAULT_TTR
+      expect(subject.logger).to receive(:warn) { }
       subject.default_time_to_run = -5
       expect(subject.default_time_to_run).to eq described_class::DEFAULT_TTR
+      expect(subject.logger).to receive(:warn) { }
       subject.default_time_to_run = "non numeric string"
       expect(subject.default_time_to_run).to eq described_class::DEFAULT_TTR
     end
@@ -91,13 +95,14 @@ describe EasyStalk::Configuration do
       subject.default_delay = 1
       expect(subject.default_delay).to eq 1
       subject.default_delay = 0
-      expect(subject.default_delay).to eq described_class::DEFAULT_DELAY
+      expect(subject.default_delay).to eq 0
       subject.default_delay = nil
-      expect(subject.default_delay).to eq described_class::DEFAULT_DELAY
+      expect(subject.default_delay).to eq nil.to_i
+      expect(subject.logger).to receive(:warn) { }
       subject.default_delay = -5
       expect(subject.default_delay).to eq described_class::DEFAULT_DELAY
       subject.default_delay = "non numeric string"
-      expect(subject.default_delay).to eq described_class::DEFAULT_DELAY
+      expect(subject.default_delay).to eq "non numeric string".to_i 
     end
   end
 
@@ -108,8 +113,11 @@ describe EasyStalk::Configuration do
   end
   describe "#serializable_context_keys=" do
     specify "only accepts array" do
-      subject.default_serializable_context_keys = 1 # todo:
-      expect(subject.default_serializable_context_keys).to eq []
+      subject.default_serializable_context_keys = [:one, :two, "three"]
+      expect(subject.default_serializable_context_keys).to eq [:one, :two, "three"]
+      expect(subject.logger).to receive(:warn) { }
+      subject.default_serializable_context_keys = 1
+      expect(subject.default_serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_KEYS
     end
   end
 
@@ -152,12 +160,16 @@ describe EasyStalk::Configuration do
     specify "only accepts positive numbers" do
       subject.pool_size = 1
       expect(subject.pool_size).to eq 1
+      expect(subject.logger).to receive(:warn) { }
       subject.pool_size = 0
       expect(subject.pool_size).to eq described_class::DEFAULT_POOL_SIZE
+      expect(subject.logger).to receive(:warn) { }
       subject.pool_size = nil
       expect(subject.pool_size).to eq described_class::DEFAULT_POOL_SIZE
+      expect(subject.logger).to receive(:warn) { }
       subject.pool_size = -5
       expect(subject.pool_size).to eq described_class::DEFAULT_POOL_SIZE
+      expect(subject.logger).to receive(:warn) { }
       subject.pool_size = "non numeric string"
       expect(subject.pool_size).to eq described_class::DEFAULT_POOL_SIZE
     end
@@ -176,12 +188,16 @@ describe EasyStalk::Configuration do
     specify "only accepts positive numbers" do
       subject.timeout_seconds = 1
       expect(subject.timeout_seconds).to eq 1
+      expect(subject.logger).to receive(:warn) { }
       subject.timeout_seconds = 0
       expect(subject.timeout_seconds).to eq described_class::DEFAULT_TIMEOUT_SECONDS
+      expect(subject.logger).to receive(:warn) { }
       subject.timeout_seconds = nil
       expect(subject.timeout_seconds).to eq described_class::DEFAULT_TIMEOUT_SECONDS
+      expect(subject.logger).to receive(:warn) { }
       subject.timeout_seconds = -5
       expect(subject.timeout_seconds).to eq described_class::DEFAULT_TIMEOUT_SECONDS
+      expect(subject.logger).to receive(:warn) { }
       subject.timeout_seconds = "non numeric string"
       expect(subject.timeout_seconds).to eq described_class::DEFAULT_TIMEOUT_SECONDS
     end
