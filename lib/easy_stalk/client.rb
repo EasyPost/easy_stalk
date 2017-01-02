@@ -4,9 +4,6 @@ require_relative 'job'
 
 module EasyStalk
   class Client
-    DEFAULT_POOL_SIZE = 30
-    DEFAULT_TIMEOUT_SECONDS = 10
-
     def self.instance
       @pool ||= create_pool
     end
@@ -18,8 +15,8 @@ module EasyStalk
       end
     end
 
-    def self.create_pool
-      raise "ENV['BEANSTALKD_URLS'] not specified" unless String === ENV['BEANSTALKD_URLS']
+    def self.create_pool(config = EasyStalk.configuration)
+      raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
       Beaneater.configure do |config|
         # config.default_put_delay   = 0
         # config.default_put_pri     = 65536
@@ -28,27 +25,10 @@ module EasyStalk
         # config.job_serializer      = lambda { |body| body }
         # config.beanstalkd_url      = 'localhost:11300'
       end
-      beanstalkd = nil
-      pool_size = DEFAULT_POOL_SIZE
-      if ENV['BEANSTALKD_POOL_SIZE'].to_i > 0
-        pool_size = ENV['BEANSTALKD_POOL_SIZE'].to_i
-      end
-      timeout_seconds = DEFAULT_TIMEOUT_SECONDS
-      if ENV['BEANSTALKD_TIMEOUT_SECONDS'].to_i > 0
-        timeout_seconds = ENV['BEANSTALKD_TIMEOUT_SECONDS'].to_i
-      end
-      instance = EzPool.new(size: pool_size, timeout: timeout_seconds) do
-        Beaneater.new(random_beanstalkd_url)
+      instance = EzPool.new(size: config.pool_size, timeout: config.timeout_seconds) do
+        Beaneater.new(config.beanstalkd_urls.sample)
       end
       instance
-    end
-
-    def self.beanstalkd_urls
-      @urls ||= ENV['BEANSTALKD_URLS'].split(",")
-    end
-
-    def self.random_beanstalkd_url
-      beanstalkd_urls.sample.strip
     end
 
   end

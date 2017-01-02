@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'easy_stalk'
-  s.version     = '0.0.5'
+  s.version     = '0.0.6'
   s.date        = '2016-09-15'
   s.summary     = 'EasyStalk - An easy way to use beanstalkd for jobs'
   s.description = 'A simple beanstalk client, worker, and job setup'
@@ -13,6 +13,7 @@ Gem::Specification.new do |s|
   s.files       = [
     'lib/easy_stalk.rb',
     'lib/easy_stalk/client.rb',
+    'lib/easy_stalk/configuration.rb',
     'lib/easy_stalk/descendant_tracking.rb',
     'lib/easy_stalk/job.rb',
     'lib/easy_stalk/tasks.rb',
