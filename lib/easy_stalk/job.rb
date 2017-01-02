@@ -7,10 +7,7 @@ module EasyStalk
     include EasyStalk::DescendantTracking
 
     SECONDS_IN_DAY = 24 * 60 * 60
-    DEFAULT_PRI = 500 # 0 is highest
-    DEFAULT_TTR = 120 # seconds
-    DEFAULT_DELAY = 0 # seconds
-    DEFAULT_SERIALIZABLE_KEYS = []
+    DEFAULT_SERIALIZABLE_CONTEXT_KEYS = []
 
     def self.tube_name(tube=nil)
       if tube
@@ -24,7 +21,7 @@ module EasyStalk
       if prefix
         @tube_prefix = prefix
       else
-        @tube_prefix || ENV['BEANSTALKD_TUBE_PREFIX'] || ""
+        @tube_prefix || EasyStalk.configuration.default_tube_prefix
       end
     end
 
@@ -33,7 +30,7 @@ module EasyStalk
       if pri
         @priority = pri
       else
-        @priority || DEFAULT_PRI
+        @priority || EasyStalk.configuration.default_priority
       end
     end
 
@@ -42,7 +39,7 @@ module EasyStalk
       if seconds
         @time_to_run = seconds
       else
-        @time_to_run || DEFAULT_TTR
+        @time_to_run || EasyStalk.configuration.default_time_to_run
       end
     end
 
@@ -51,7 +48,7 @@ module EasyStalk
       if seconds
         @delay = seconds
       else
-        @delay || DEFAULT_DELAY
+        @delay || EasyStalk.configuration.default_delay
       end
     end
 
@@ -59,7 +56,7 @@ module EasyStalk
       if keys.size > 0
         @serializable_context_keys = keys
       else
-        @serializable_context_keys || DEFAULT_SERIALIZABLE_KEYS
+        @serializable_context_keys || DEFAULT_SERIALIZABLE_CONTEXT_KEYS
       end
     end
 

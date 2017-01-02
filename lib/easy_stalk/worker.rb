@@ -16,14 +16,8 @@ module EasyStalk
         raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
       end
 
-      if on_fail && !on_fail.respond_to?(:call)
-        raise ArgumentError, "on_fail handler does not respond to call"
-      elsif !on_fail
-        on_fail = Proc.new { |job_class, job_body, ex|
-          EasyStalk.logger.error "Worker for #{job_class} on tube[#{job_class.tube_name}] failed #{ex.message}"
-          EasyStalk.logger.error ex.backtrace.join("\n")
-        }
-      end
+      on_fail = EasyStalk.configuration.default_worker_on_fail unless on_fail
+      raise ArgumentError, "on_fail handler does not respond to call" unless on_fail.respond_to?(:call)
 
       register_signal_handlers!
       @cancelled = false
@@ -66,7 +60,8 @@ module EasyStalk
         end
       end
 
-      EasyStalk.logger.info "#{job_classes.map{|job_class| "Worker #{job_class} on tube:[ #{job_class.tube_name}]"}.join(" and ")} stopped"
+      jobs_list = job_classes.map { |job_class| "#{job_class} on tube #{job_class.tube_name}" }.join(", ")
+      EasyStalk.logger.info "Worker running #{jobs_list} has been stopped"
     end
 
     private
