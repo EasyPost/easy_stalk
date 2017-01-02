@@ -16,7 +16,7 @@ module EasyStalk
         raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
       end
 
-      on_fail = EasyStalk.configuration.worker_on_fail unless on_fail
+      on_fail = EasyStalk.configuration.default_worker_on_fail unless on_fail
       raise ArgumentError, "on_fail handler does not respond to call" unless on_fail.respond_to?(:call)
 
       register_signal_handlers!

@@ -110,12 +110,11 @@ A number of options are configurable in the gem via a config block.
 ```ruby
 EasyStalk.configure do |config|
   config.logger = MyLogger.new
-  config.worker_on_fail = Proc.new { |job_class, job_data, ex| EasyStalk.logger.error "#{ex.message} - #{job_data}" }
+  config.default_worker_on_fail = Proc.new { |job_class, job_data, ex| EasyStalk.logger.error "#{ex.message} - #{job_data}" }
   config.default_tube_prefix = "tube.prefix.name."
   config.default_priority = 10
   config.default_time_to_run = 60
   config.default_delay = 60
-  config.default_serializable_context_keys = [:enqueued_at, :data]
   config.beanstalkd_urls = ["localhost:11300", "127.0.0.1:11300"]
   config.pool_size = 10
   config.timeout_seconds = 60

@@ -94,7 +94,7 @@ describe EasyStalk::Job do
           expect(MockJobWithKeys.new().class.serializable_context_keys).to eq [:cat, :dog]
         end
         it 'uses default if not set' do
-          expect(subject.serializable_context_keys).to eq EasyStalk::Configuration::DEFAULT_SERIALIZABLE_KEYS
+          expect(subject.serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_CONTEXT_KEYS
         end
       end
     end

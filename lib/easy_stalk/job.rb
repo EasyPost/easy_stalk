@@ -7,6 +7,7 @@ module EasyStalk
     include EasyStalk::DescendantTracking
 
     SECONDS_IN_DAY = 24 * 60 * 60
+    DEFAULT_SERIALIZABLE_CONTEXT_KEYS = []
 
     def self.tube_name(tube=nil)
       if tube
@@ -55,7 +56,7 @@ module EasyStalk
       if keys.size > 0
         @serializable_context_keys = keys
       else
-        @serializable_context_keys || EasyStalk.configuration.default_serializable_context_keys
+        @serializable_context_keys || DEFAULT_SERIALIZABLE_CONTEXT_KEYS
       end
     end
 

@@ -14,15 +14,15 @@ describe EasyStalk::Configuration do
     end
   end
 
-  describe "#worker_on_fail" do
+  describe "#default_worker_on_fail" do
     specify "gets the default logger" do
-      expect(subject.worker_on_fail).to be_a Proc
+      expect(subject.default_worker_on_fail).to be_a Proc
     end
   end
-  describe "#worker_on_fail=" do
+  describe "#default_worker_on_fail=" do
     specify "sets the default on_fail proc" do
-      subject.worker_on_fail = "cat"
-      expect(subject.worker_on_fail).to eq "cat"
+      subject.default_worker_on_fail = "cat"
+      expect(subject.default_worker_on_fail).to eq "cat"
     end
   end
 
@@ -102,27 +102,9 @@ describe EasyStalk::Configuration do
       subject.default_delay = -5
       expect(subject.default_delay).to eq described_class::DEFAULT_DELAY
       subject.default_delay = "non numeric string"
-      expect(subject.default_delay).to eq "non numeric string".to_i 
+      expect(subject.default_delay).to eq "non numeric string".to_i
     end
   end
-
-  describe "#default_serializable_context_keys" do
-    specify "gets default if not provided" do
-      expect(subject.default_serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_KEYS
-    end
-  end
-  describe "#serializable_context_keys=" do
-    specify "only accepts array" do
-      subject.default_serializable_context_keys = [:one, :two, "three"]
-      expect(subject.default_serializable_context_keys).to eq [:one, :two, "three"]
-      expect(subject.logger).to receive(:warn) { }
-      subject.default_serializable_context_keys = 1
-      expect(subject.default_serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_KEYS
-    end
-  end
-
-
-
 
   describe "#beanstalkd_urls" do
     specify "defaults to ENV['BEANSTALKD_URLS']" do
