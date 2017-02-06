@@ -2,16 +2,23 @@
 # will give you the rake tasks
 
 namespace :easy_stalk do
-  # rake easy_stalk:work_jobs[tubename]
+  # rake easy_stalk:work
+  # rake easy_stalk:work[tubename1,tubename2]
   desc "Start EasyStalk workers on the passed in tubes"
-  task :work_jobs => :environment do |task, args|
+  task :work => :environment do |task, args|
     ::Rails.application.eager_load! if defined?(::Rails)
 
-    tubes = args.extras
-    EasyStalk::Job.descendants.each do |job|
-      if tubes.include?(job.tube_name)
-        EasyStalk::Worker.new().work_jobs(job)
-      end
-    end
+    tubes = if args.extras.size > 0
+              EasyStalk::Job.descendants.select do |job|
+                tubs.include?(job.tube_name)
+              end
+            end
+
+    EasyStalk::Worker.new().work(tubes)
+  end
+
+  task :work_jobs do |task, args|
+    EasyStalk.logger.info("work_jobs is deprecated, please use work instead")
+    Rake::Task["easy_stalk:work"].invoke
   end
 end
