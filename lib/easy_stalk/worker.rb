@@ -8,7 +8,7 @@ module EasyStalk
     RETRY_TIMES = 5
     RESERVE_TIMEOUT = 3
 
-    def work_jobs(job_classes = nil, on_fail: nil)
+    def work(job_classes = nil, on_fail: nil)
       job_classes = EasyStalk::Job.descendants unless job_classes
       job_classes = [job_classes] unless job_classes.instance_of?(Array)
 
@@ -22,13 +22,12 @@ module EasyStalk
       register_signal_handlers!
       @cancelled = false
 
-      tube_class_hash = {}
+      tube_class_hash = Hash[
+        job_classes.map { |cls| [cls.tube_name, cls] }
+      ]
 
       EasyStalk::Client.instance.with do |beanstalk|
-        job_classes.each do |job_class|
-          beanstalk.tubes.watch!(job_class.tube_name)
-          tube_class_hash[job_class.tube_name] = job_class
-        end
+        beanstalk.tubes.watch!(*tube_class_hash.keys)
         EasyStalk.logger.info "Watching tube #{beanstalk.tubes.watched} for jobs"
 
         # TODO: we can likely do without this cancelled protection

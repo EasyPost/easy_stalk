@@ -8,8 +8,8 @@ module EasyStalk
       end
     end
     class Tubes
-      def watch!(tube_name)
-        (@watched ||= []) << tube_name
+      def watch!(*tube_names)
+        @watched = tube_names
       end
       def watched
         @watched

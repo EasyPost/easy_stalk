@@ -77,32 +77,41 @@ EasyStalk::Client.enqueue(job_instance, priority: pri, time_to_run: ttr, delay: 
 
 ### EasyStalk::Worker
 
-The worker can be started by running work_jobs and passing in job classes to work.
+The worker can be started by running `work`.
 
 ```ruby
-EasyStalk::Worker.new().work_jobs(YourJobClassA, YourJobClassB, etc.)
+EasyStalk::Worker.new().work
 ```
 
 This method currently watches a Job class's tube, running the Job as needed.
 If a Job raises an exception, or otherwise is failed using Interactor's context.fail! method, it will retry up to 5 times with a modified cubic backoff with random delta.
 
-If you wish to override the job failure logging, you can pass in an object that responds to call to the work_jobs function as a named parameter called on_fail.
+If you wish to override the job failure logging, you can pass in an object that responds to call to the `work` function as a named parameter called `on_fail`.
 This will be passed the job class object, the job data as a string, and the exception that was raised for logging or alerting purposes.
 
 ```ruby
 failure_handler = Proc.new { |job_class, job_data, ex| EasyStalk.logger.error "#{ex.message} - #{job_data}" }
-EasyStalk::Worker.new().work_jobs(YourJobClass, on_fail: failure_logger)
+EasyStalk::Worker.new().work(YourJobClass, on_fail: failure_logger)
 ```
 
 
 You can also require the rake tasks in your Rakefile
+
 ```ruby
 require 'easy_stalk/tasks'
 
 ```
+
 Which will let you start a worker with the following syntax
+
+```sh
+$ rake easy_stalk:work
 ```
-$ rake easy_stalk:work_jobs[tubename_a, tubename_b, etc.]
+
+or with specific job classes
+
+```sh
+$ rake easy_stalk:work[tubename1,tubename2]
 ```
 
 ## Configuration
