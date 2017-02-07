@@ -1,5 +1,5 @@
 require 'beaneater'
-require 'connection_pool'
+require 'ezpool'
 require_relative 'job'
 
 module EasyStalk
@@ -25,7 +25,7 @@ module EasyStalk
         # config.job_serializer      = lambda { |body| body }
         # config.beanstalkd_url      = 'localhost:11300'
       end
-      instance = ConnectionPool.new(size: config.pool_size, timeout: config.timeout_seconds) do
+      instance = EzPool.new(size: config.pool_size, timeout: config.timeout_seconds) do
         Beaneater.new(config.beanstalkd_urls.sample)
       end
       instance

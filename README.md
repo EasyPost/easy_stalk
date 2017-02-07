@@ -56,7 +56,7 @@ To test your jobs, you can simply treat them as Interactors, and run `TextPrinti
 
 ### EasyStalk::Client
 
-The client contains a reference to a singleton [connection pool](https://github.com/mperham/connection_pool) which connects to beanstalk instances using the [beaneater gem](https://github.com/beanstalkd/beaneater)
+The client contains a reference to a singleton [connection pool](https://github.com/EasyPost/ezpool) which connects to beanstalk instances using the [beaneater gem](https://github.com/beanstalkd/beaneater)
 
 The client requires an ENV var of `BEANSTALKD_URLS` to be present, which contains a comma separated string of host:port combinations which are randomly selected for connections.
 
