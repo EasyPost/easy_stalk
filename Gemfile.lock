@@ -1,17 +1,17 @@
 PATH
   remote: .
   specs:
-    easy_stalk (0.0.6)
+    easy_stalk (0.0.7)
       beaneater (~> 1.0)
-      connection_pool (~> 2.2)
+      ezpool (~> 1.0)
       interactor (~> 3.1)
 
 GEM
   remote: https://rubygems.org/
   specs:
     beaneater (1.0.0)
-    connection_pool (2.2.0)
     diff-lcs (1.2.5)
+    ezpool (1.0.0)
     interactor (3.1.0)
     rspec (3.5.0)
       rspec-core (~> 3.5.0)

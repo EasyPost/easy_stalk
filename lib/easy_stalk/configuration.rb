@@ -9,10 +9,12 @@ module EasyStalk
                 :default_delay,
                 :beanstalkd_urls,
                 :pool_size,
-                :timeout_seconds
+                :timeout_seconds,
+                :worker_reconnect_seconds
 
     DEFAULT_POOL_SIZE = 30
     DEFAULT_TIMEOUT_SECONDS = 10
+    DEFAULT_WORKER_RECONNECT_SECONDS = 300
 
     DEFAULT_TUBE_PREFIX = ""
     DEFAULT_PRI = 500 # 0 is highest
@@ -37,6 +39,7 @@ module EasyStalk
       self.beanstalkd_urls = ENV['BEANSTALKD_URLS']
       self.pool_size = ENV['BEANSTALKD_POOL_SIZE'] || DEFAULT_POOL_SIZE
       self.timeout_seconds = ENV['BEANSTALKD_TIMEOUT_SECONDS'] || DEFAULT_TIMEOUT_SECONDS
+      self.worker_reconnect_seconds = ENV['BEANSTALKD_WORKER_RECONNECT_SECONDS'] || DEFAULT_WORKER_RECONNECT_SECONDS
     end
 
     def default_tube_prefix=(tube_prefix)
@@ -96,6 +99,15 @@ module EasyStalk
       else
         logger.warn "Invalid timeout_seconds #{seconds}. Using default."
         @timeout_seconds = DEFAULT_TIMEOUT_SECONDS
+      end
+    end
+
+    def worker_reconnect_seconds=(seconds)
+      if seconds.respond_to?(:to_i) && seconds.to_i > 0
+        @worker_reconnect_seconds = seconds.to_i
+      else
+        logger.warn "Invalid worker_reconnect_seconds #{seconds}. Using default."
+        @worker_reconnect_seconds = DEFAULT_WORKER_RECONNECT_SECONDS
       end
     end
 

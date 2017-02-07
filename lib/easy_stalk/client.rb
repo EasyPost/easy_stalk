@@ -1,5 +1,5 @@
 require 'beaneater'
-require 'connection_pool'
+require 'ezpool'
 require_relative 'job'
 
 module EasyStalk
@@ -15,18 +15,31 @@ module EasyStalk
       end
     end
 
+    private
+
     def self.create_pool(config = EasyStalk.configuration)
       raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
-      Beaneater.configure do |config|
-        # config.default_put_delay   = 0
-        # config.default_put_pri     = 65536
-        # config.default_put_ttr     = 120
-        # config.job_parser          = lambda { |body| body }
-        # config.job_serializer      = lambda { |body| body }
-        # config.beanstalkd_url      = 'localhost:11300'
+      Beaneater.configure do |konfig|
       end
-      instance = ConnectionPool.new(size: config.pool_size, timeout: config.timeout_seconds) do
+      instance = EzPool.new(size: config.pool_size, timeout: config.timeout_seconds) do
         Beaneater.new(config.beanstalkd_urls.sample)
+      end
+      instance
+    end
+
+    def self.create_worker_pool(tubes, config=EasyStalk.configuration)
+      raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
+      Beaneater.configure do |konfig|
+      end
+      conns = config.beanstalkd_urls.shuffle
+      i = 0
+      instance = EzPool.new(size: config.pool_size, timeout: config.timeout_seconds, max_age: config.worker_reconnect_seconds) do
+        # rotate through the connections fairly
+        client = Beaneater.new(conns[i])
+        i = (i + 1) % conns.length
+        client.tubes.watch!(*tube_class_hash.keys)
+        EasyStalk.logger.info "Watching tube #{beanstalk.tubes.watched} for jobs"
+        client
       end
       instance
     end
