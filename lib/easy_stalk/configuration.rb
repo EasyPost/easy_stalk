@@ -12,7 +12,7 @@ module EasyStalk
                 :timeout_seconds,
                 :worker_reconnect_seconds
 
-    DEFAULT_POOL_SIZE = 30
+    DEFAULT_POOL_SIZE = 5
     DEFAULT_TIMEOUT_SECONDS = 10
     DEFAULT_WORKER_RECONNECT_SECONDS = 300
 

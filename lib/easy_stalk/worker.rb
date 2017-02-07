@@ -1,5 +1,6 @@
 require 'json'
 require 'interactor'
+require 'timeout'
 require_relative 'client'
 require_relative 'job'
 
@@ -31,6 +32,9 @@ module EasyStalk
       while !@cancelled
         pool.with do |beanstalk|
           job = get_one_job(beanstalk)
+          if job.nil?
+            next
+          end
           begin
             job_class = tube_class_hash[job.tube]
             job_class.call!(JSON.parse(job.body))
@@ -58,6 +62,10 @@ module EasyStalk
 
     def get_one_job(beanstalk_client)
       begin
+        # This Timeout block is to catch the case where the beanstalkd
+        # may zone out and forget to reserve a job for us. We intentionally
+        # don't catch Timeout::Error; if that fires, then beanstalkd is
+        # messed up, and our best bet is probably to exit noisily
         Timeout.timeout(RESERVE_TIMEOUT * 4) {
           beanstalk_client.tubes.reserve(RESERVE_TIMEOUT)
         }

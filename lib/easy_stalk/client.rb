@@ -15,25 +15,14 @@ module EasyStalk
       end
     end
 
-    private
-
-    def self.create_pool(config = EasyStalk.configuration)
-      raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
-      Beaneater.configure do |konfig|
-      end
-      instance = EzPool.new(size: config.pool_size, timeout: config.timeout_seconds) do
-        Beaneater.new(config.beanstalkd_urls.sample)
-      end
-      instance
-    end
-
     def self.create_worker_pool(tubes, config=EasyStalk.configuration)
       raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
-      Beaneater.configure do |konfig|
-      end
       conns = config.beanstalkd_urls.shuffle
       i = 0
-      instance = EzPool.new(size: config.pool_size, timeout: config.timeout_seconds, max_age: config.worker_reconnect_seconds) do
+      # workers should only ever run a single thread to talk to beanstalk;
+      # set the pool size t "1" and the timeout low to ensure that we don't
+      # ever violate that
+      instance = EzPool.new(size: 1, timeout: 1, max_age: config.worker_reconnect_seconds) do
         # rotate through the connections fairly
         client = Beaneater.new(conns[i])
         i = (i + 1) % conns.length
@@ -44,5 +33,14 @@ module EasyStalk
       instance
     end
 
+    def self.create_pool(config = EasyStalk.configuration)
+      raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
+      instance = EzPool.new(size: config.pool_size, timeout: config.timeout_seconds) do
+        Beaneater.new(config.beanstalkd_urls.sample)
+      end
+      instance
+    end
+
+    private_class_method :create_pool
   end
 end
