@@ -32,9 +32,9 @@ module EasyStalk
       while !@cancelled
         pool.with do |beanstalk|
           job = get_one_job(beanstalk)
-          if job.nil?
-            next
-          end
+          # continue around the loop if we got a timeout reserving a job
+          # (that is to say, if there's nothing in this tube)
+          next unless job
           begin
             job_class = tube_class_hash[job.tube]
             job_class.call!(JSON.parse(job.body))
