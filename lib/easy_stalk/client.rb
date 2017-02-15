@@ -26,8 +26,8 @@ module EasyStalk
         # rotate through the connections fairly
         client = Beaneater.new(conns[i])
         i = (i + 1) % conns.length
-        client.tubes.watch!(*tube_class_hash.keys)
-        EasyStalk.logger.info "Watching tube #{beanstalk.tubes.watched} for jobs"
+        client.tubes.watch!(*tubes)
+        EasyStalk.logger.info "Watching tubes #{tubes} for jobs"
         client
       end
       instance

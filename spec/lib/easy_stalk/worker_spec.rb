@@ -21,6 +21,10 @@ describe EasyStalk::Worker do
     context "with a valid job class" do
       before do
         class ValidJob < EasyStalk::Job
+          def self.tube_name
+            "job_tube"
+          end
+
           def call
           end
         end
@@ -32,11 +36,11 @@ describe EasyStalk::Worker do
       specify do
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
         beanstalk = EasyStalk::MockBeaneater.new
-        mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
-        expect(EzPool).to receive(:new).and_return mocked_client
+        expect(Beaneater).to receive(:new).and_return beanstalk
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(tubes).to receive(:watch!).with("job_tube")
         sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
