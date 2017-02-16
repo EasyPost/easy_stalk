@@ -1,6 +1,8 @@
 require 'logger'
 
 module EasyStalk
+  VERSION = '0.0.8'
+
   class << self
     attr_writer :logger
 
