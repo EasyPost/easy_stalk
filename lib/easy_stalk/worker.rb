@@ -1,5 +1,6 @@
 require 'json'
 require 'interactor'
+require 'timeout'
 require_relative 'client'
 require_relative 'job'
 
@@ -26,35 +27,29 @@ module EasyStalk
         job_classes.map { |cls| [cls.tube_name, cls] }
       ]
 
-      EasyStalk::Client.instance.with do |beanstalk|
-        beanstalk.tubes.watch!(*tube_class_hash.keys)
-        EasyStalk.logger.info "Watching tube #{beanstalk.tubes.watched} for jobs"
+      pool = EasyStalk::Client.create_worker_pool(tube_class_hash.keys)
 
-        # TODO: we can likely do without this cancelled protection
-        # Worse case scenario, we call the interactor, but the job gets re-enqueued when
-        # ttr expires.
-        while !@cancelled
-          # wait until next job available
+      while !@cancelled
+        pool.with do |beanstalk|
+          job = get_one_job(beanstalk)
+          # continue around the loop if we got a timeout reserving a job
+          # (that is to say, if there's nothing in this tube)
+          next unless job
           begin
-            job = beanstalk.tubes.reserve(RESERVE_TIMEOUT)
-            begin
-              job_class = tube_class_hash[job.tube]
-              result = job_class.call!(JSON.parse(job.body))
-            rescue => ex
-              # Job issued a failed context or raised an unhandled exception
-              if job.stats.releases < RETRY_TIMES
-                # Re-enqueue with stepped delay
-                release_with_delay(job)
-              else
-                job.bury
-              end
-              on_fail.call(job_class, job.body, ex)
+            job_class = tube_class_hash[job.tube]
+            job_class.call!(JSON.parse(job.body))
+          rescue => ex
+            # Job issued a failed context or raised an unhandled exception
+            if job.stats.releases < RETRY_TIMES
+              # Re-enqueue with stepped delay
+              release_with_delay(job)
             else
-              # Job Succeeded!
-              job.delete
+              job.bury
             end
-          rescue Beaneater::TimedOutError => e
-            # Failed to reserve a job, tube is likely empty
+            on_fail.call(job_class, job.body, ex)
+          else
+            # Job Succeeded!
+            job.delete
           end
         end
       end
@@ -64,6 +59,20 @@ module EasyStalk
     end
 
     private
+
+    def get_one_job(beanstalk_client)
+      begin
+        # This Timeout block is to catch the case where the beanstalkd
+        # may zone out and forget to reserve a job for us. We intentionally
+        # don't catch Timeout::Error; if that fires, then beanstalkd is
+        # messed up, and our best bet is probably to exit noisily
+        Timeout.timeout(RESERVE_TIMEOUT * 4) {
+          beanstalk_client.tubes.reserve(RESERVE_TIMEOUT)
+        }
+      rescue Beaneater::TimedOutError
+        # Failed to reserve a job, tube is likely empty
+      end
+    end
 
     def release_with_delay(job)
       # Compute a cubed backoff with a randomizer, skipping the first gen

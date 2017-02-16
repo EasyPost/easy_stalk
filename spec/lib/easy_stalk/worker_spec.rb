@@ -12,7 +12,6 @@ describe EasyStalk::Worker do
     end
     after do
       EasyStalk.configure
-      EasyStalk::Client.instance_variable_set :@pool, nil
     end
 
     context "with an invalid job class" do
@@ -22,6 +21,10 @@ describe EasyStalk::Worker do
     context "with a valid job class" do
       before do
         class ValidJob < EasyStalk::Job
+          def self.tube_name
+            "job_tube"
+          end
+
           def call
           end
         end
@@ -32,14 +35,12 @@ describe EasyStalk::Worker do
 
       specify do
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
-        EasyStalk::Client.instance_variable_set :@pool, nil
         beanstalk = EasyStalk::MockBeaneater.new
-        mocked_client = ConnectionPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
-        expect(ConnectionPool).to receive(:new).and_return mocked_client
+        expect(Beaneater).to receive(:new).and_return beanstalk
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        expect(tubes).to receive(:watch!).with(job_instance.class.tube_name)
+        expect(tubes).to receive(:watch!).with("job_tube")
         sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
@@ -55,13 +56,11 @@ describe EasyStalk::Worker do
 
       specify "raising exception will trigger a failure" do
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
-        EasyStalk::Client.instance_variable_set :@pool, nil
         beanstalk = EasyStalk::MockBeaneater.new
-        mocked_client = ConnectionPool.new(size: 2, timeout: 30) { beanstalk }
+        mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
-        expect(ConnectionPool).to receive(:new).and_return mocked_client
+        expect(EzPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        expect(tubes).to receive(:watch!).with(job_instance.class.tube_name)
         sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
@@ -83,13 +82,11 @@ describe EasyStalk::Worker do
 
       specify "fail will call on_fail handler if provided" do
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
-        EasyStalk::Client.instance_variable_set :@pool, nil
         beanstalk = EasyStalk::MockBeaneater.new
-        mocked_client = ConnectionPool.new(size: 2, timeout: 30) { beanstalk }
+        mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
-        expect(ConnectionPool).to receive(:new).and_return mocked_client
+        expect(EzPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        expect(tubes).to receive(:watch!).with(job_instance.class.tube_name)
         sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
@@ -120,12 +117,11 @@ describe EasyStalk::Worker do
 
       specify do
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
-        EasyStalk::Client.instance_variable_set :@pool, nil
         beanstalk = EasyStalk::MockBeaneater.new
-        mocked_client = ConnectionPool.new(size: 2, timeout: 30) { beanstalk }
+        mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
-        expect(ConnectionPool).to receive(:new).and_return mocked_client
+        expect(EzPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
         sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
         expect(tubes).to receive(:reserve) {
