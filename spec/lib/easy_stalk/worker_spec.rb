@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe EasyStalk::Worker do
-
   describe "self.work" do
     before do
       EasyStalk.configure do |config|
@@ -29,6 +28,10 @@ describe EasyStalk::Worker do
           end
         end
       end
+      after do
+        Object.send(:remove_const, :ValidJob)
+      end
+
       let(:job_instance) { ValidJob.new }
 
       it { expect { subject.work(job_instance) }.to raise_error ArgumentError, "#{job_instance} is not a valid EasyStalk::Job subclass" }
@@ -112,6 +115,9 @@ describe EasyStalk::Worker do
           end
         end
       end
+      after do
+        Object.send(:remove_const, :ValidJob)
+      end
 
       let(:job_instance) { ValidJob.new }
 
@@ -133,6 +139,44 @@ describe EasyStalk::Worker do
           end
           sample_job
         }.exactly(3).times
+        expect { subject.work }.to_not raise_error
+      end
+    end
+
+    context "with a custom retry times" do
+      before do
+        class ValidJob < EasyStalk::Job
+          retry_times 2
+          def call
+            raise "boom"
+          end
+        end
+      end
+      after do
+        Object.send(:remove_const, :ValidJob)
+      end
+
+      specify "buries the job after retry_times +1 attempt" do
+        EasyStalk.configuration.default_worker_on_fail = Proc.new {}
+        expect(EasyStalk.logger).to receive(:info).at_least(2).times {}
+        beanstalk = EasyStalk::MockBeaneater.new
+        mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
+        tubes = EasyStalk::MockBeaneater::Tubes.new
+        tubes.watch!(ValidJob)
+        expect(EzPool).to receive(:new).and_return mocked_client
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(tubes).to receive(:reserve) {
+          @count = (@count || 0) + 1
+          if @count > 3
+            # all done. simulate empty queue
+            subject.send :cleanup
+            nil
+          else
+            job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, ValidJob.tube_name, @count)
+            expect(job).to receive(:bury) if @count == 3
+            job
+          end
+        }.exactly(4).times
         expect { subject.work }.to_not raise_error
       end
     end

@@ -106,6 +106,27 @@ describe EasyStalk::Configuration do
     end
   end
 
+  describe "#default_retry_times" do
+    specify "gets default if not provided" do
+      expect(subject.default_retry_times).to eq described_class::DEFAULT_RETRY_TIMES
+    end
+  end
+  describe "#default_retry_times=" do
+    specify "only accepts positive numbers" do
+      subject.default_retry_times = 1
+      expect(subject.default_retry_times).to eq 1
+      subject.default_retry_times = 0
+      expect(subject.default_retry_times).to eq 0
+      subject.default_retry_times = nil
+      expect(subject.default_retry_times).to eq nil.to_i
+      expect(subject.logger).to receive(:warn) { }
+      subject.default_retry_times = -5
+      expect(subject.default_retry_times).to eq described_class::DEFAULT_RETRY_TIMES
+      subject.default_retry_times = "non numeric string"
+      expect(subject.default_retry_times).to eq "non numeric string".to_i
+    end
+  end
+
   describe "#beanstalkd_urls" do
     specify "defaults to ENV['BEANSTALKD_URLS']" do
       urls = "test1.com:11300,test2.com:11300,test3.com:11300"
@@ -188,7 +209,6 @@ describe EasyStalk::Configuration do
 end
 =begin
 
-worker RETRY_TIMES
 worker RESERVE_TIMEOUT
 
 worker backoff_proc

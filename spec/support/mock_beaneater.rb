@@ -38,8 +38,8 @@ module EasyStalk
     end
     class TubeItem
       attr_accessor :data, :pri, :ttr, :delay_until
-      def initialize(data, pri, ttr, delay_until, tube_name)
-        @data, @pri, @ttr, @delay_until, @tube_name = data, pri, ttr, delay_until, tube_name
+      def initialize(data, pri, ttr, delay_until, tube_name, releases=1)
+        @data, @pri, @ttr, @delay_until, @tube_name, @releases = data, pri, ttr, delay_until, tube_name, releases
       end
       def body
         @data
@@ -58,8 +58,10 @@ module EasyStalk
       end
       def release(delay: 0)
       end
+      def bury
+      end
       def stats
-        TubeItemStats.new(releases: 1)
+        TubeItemStats.new(releases: @releases)
       end
     end
     def tubes
