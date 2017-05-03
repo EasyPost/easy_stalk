@@ -86,6 +86,18 @@ describe EasyStalk::Job do
         end
       end
 
+      describe '.retry_times' do
+        it 'can be set manually' do
+          class MockJobWithRetryTimes < subject
+            retry_times 5
+          end
+          expect(MockJobWithRetryTimes.new().class.retry_times).to eq 5
+        end
+        it 'uses default if not set' do
+          expect(subject.retry_times).to eq EasyStalk::Configuration::DEFAULT_RETRY_TIMES
+        end
+      end
+
       describe '.serializable_context_keys' do
         it 'can be set manually' do
           class MockJobWithKeys < subject

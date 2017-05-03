@@ -52,6 +52,15 @@ module EasyStalk
       end
     end
 
+    def self.retry_times(attempts=nil)
+      # max number of times to retry job before burying
+      if attempts
+        @retry_times = attempts
+      else
+        @retry_times || EasyStalk.configuration.default_retry_times
+      end
+    end
+
     def self.serializable_context_keys(*keys)
       if keys.size > 0
         @serializable_context_keys = keys
