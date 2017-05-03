@@ -7,6 +7,7 @@ module EasyStalk
                 :default_priority,
                 :default_time_to_run,
                 :default_delay,
+                :default_retry_times,
                 :beanstalkd_urls,
                 :pool_size,
                 :timeout_seconds,
@@ -20,6 +21,7 @@ module EasyStalk
     DEFAULT_PRI = 500 # 0 is highest
     DEFAULT_TTR = 120 # seconds
     DEFAULT_DELAY = 0 # seconds
+    DEFAULT_RETRY_TIMES = 5
 
     def initialize
       @logger = Logger.new($stdout).tap do |log|
@@ -35,6 +37,7 @@ module EasyStalk
       self.default_priority = DEFAULT_PRI
       self.default_time_to_run = DEFAULT_TTR
       self.default_delay = DEFAULT_DELAY
+      self.default_retry_times = DEFAULT_RETRY_TIMES
       # FROM CLIENT
       self.beanstalkd_urls = ENV['BEANSTALKD_URLS']
       self.pool_size = ENV['BEANSTALKD_POOL_SIZE'] || DEFAULT_POOL_SIZE
@@ -75,6 +78,15 @@ module EasyStalk
       else
         logger.warn "Invalid default_delay #{delay}. Using default."
         @default_delay = DEFAULT_DELAY
+      end
+    end
+
+    def default_retry_times=(retry_times)
+      if retry_times.respond_to?(:to_i) && retry_times.to_i >= 0
+        @default_retry_times = retry_times.to_i
+      else
+        logger.warn "Invalid default_retry_times #{retry_times}. Using default."
+        @default_retry_times = DEFAULT_RETRY_TIMES
       end
     end
 

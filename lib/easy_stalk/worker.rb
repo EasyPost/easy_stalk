@@ -6,7 +6,6 @@ require_relative 'job'
 
 module EasyStalk
   class Worker
-    RETRY_TIMES = 5
     RESERVE_TIMEOUT = 3
 
     def work(job_classes = nil, on_fail: nil)
@@ -40,7 +39,7 @@ module EasyStalk
             job_class.call!(JSON.parse(job.body))
           rescue => ex
             # Job issued a failed context or raised an unhandled exception
-            if job.stats.releases < RETRY_TIMES
+            if job.stats.releases < EasyStalk.configuration.default_retry_times
               # Re-enqueue with stepped delay
               release_with_delay(job)
             else
