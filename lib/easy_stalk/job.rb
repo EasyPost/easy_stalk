@@ -21,7 +21,7 @@ module EasyStalk
       if prefix
         @tube_prefix = prefix
       else
-        @tube_prefix || EasyStalk.configuration.default_tube_prefix
+        fetch_attribute(:tube_prefix)
       end
     end
 
@@ -30,7 +30,7 @@ module EasyStalk
       if pri
         @priority = pri
       else
-        @priority || EasyStalk.configuration.default_priority
+        fetch_attribute(:priority)
       end
     end
 
@@ -39,7 +39,7 @@ module EasyStalk
       if seconds
         @time_to_run = seconds
       else
-        @time_to_run || EasyStalk.configuration.default_time_to_run
+        fetch_attribute(:time_to_run)
       end
     end
 
@@ -48,7 +48,7 @@ module EasyStalk
       if seconds
         @delay = seconds
       else
-        @delay || EasyStalk.configuration.default_delay
+        fetch_attribute(:delay)
       end
     end
 
@@ -57,7 +57,7 @@ module EasyStalk
       if attempts
         @retry_times = attempts
       else
-        @retry_times || EasyStalk.configuration.default_retry_times
+        fetch_attribute(:retry_times)
       end
     end
 
@@ -65,7 +65,19 @@ module EasyStalk
       if keys.size > 0
         @serializable_context_keys = keys
       else
-        @serializable_context_keys || DEFAULT_SERIALIZABLE_CONTEXT_KEYS
+        fetch_attribute(:serializable_context_keys, DEFAULT_SERIALIZABLE_CONTEXT_KEYS)
+      end
+    end
+
+    def self.fetch_attribute(attribute, default=nil)
+      if self.instance_variable_defined?("@#{attribute}".to_sym)
+        self.instance_variable_get("@#{attribute}".to_sym)
+      elsif superclass.respond_to?(attribute.to_sym)
+        superclass.send(attribute.to_sym)
+      elsif EasyStalk.configuration.respond_to?("default_#{attribute}".to_sym)
+        EasyStalk.configuration.send("default_#{attribute}".to_sym)
+      else
+        default
       end
     end
 
