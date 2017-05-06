@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'easy_stalk'
-  s.version     = '0.0.9'
+  s.version     = '0.0.10'
   s.date        = '2017-05-02'
   s.summary     = 'EasyStalk - An easy way to use beanstalkd for jobs'
   s.description = 'A simple beanstalk client, worker, and job setup'
@@ -10,11 +10,11 @@ Gem::Specification.new do |s|
   s.add_dependency "beaneater", '~> 1.0'
   s.add_dependency "ezpool", '~> 1.0'
   s.add_dependency "interactor", '~> 3.1'
+  s.add_dependency "descendants_tracker", '~> 0.0.4'
   s.files       = [
     'lib/easy_stalk.rb',
     'lib/easy_stalk/client.rb',
     'lib/easy_stalk/configuration.rb',
-    'lib/easy_stalk/descendant_tracking.rb',
     'lib/easy_stalk/job.rb',
     'lib/easy_stalk/tasks.rb',
     'lib/easy_stalk/test.rb',
