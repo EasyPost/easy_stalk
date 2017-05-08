@@ -54,6 +54,16 @@ describe EasyStalk::Job do
           Object.send(:remove_const, :MockJobWithName)
           Object.send(:remove_const, :MockJobWithNameAndPrefix)
         end
+        it 'does not inherit tube_name' do
+          class MockJobWithName < subject
+            tube_name "bar"
+          end
+          class MockChildJobWithoutName < MockJobWithName
+          end
+          expect(MockChildJobWithoutName.new.class.tube_name).to eq "MockChildJobWithoutName"
+          Object.send(:remove_const, :MockJobWithName)
+          Object.send(:remove_const, :MockChildJobWithoutName)
+        end
       end
 
       describe '.tube_prefix' do
