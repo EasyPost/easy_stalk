@@ -69,18 +69,6 @@ module EasyStalk
       end
     end
 
-    def self.fetch_attribute(attribute, default=nil)
-      if self.instance_variable_defined?("@#{attribute}".to_sym)
-        self.instance_variable_get("@#{attribute}".to_sym)
-      elsif superclass.respond_to?(attribute.to_sym)
-        superclass.send(attribute.to_sym)
-      elsif EasyStalk.configuration.respond_to?("default_#{attribute}".to_sym)
-        EasyStalk.configuration.send("default_#{attribute}".to_sym)
-      else
-        default
-      end
-    end
-
     def enqueue(beanstalk_connection, priority: nil, time_to_run: nil, delay: nil, delay_until: nil)
       tube = beanstalk_connection.tubes[self.class.tube_name]
       pri = priority || self.class.priority
@@ -102,6 +90,20 @@ module EasyStalk
 
     def call
       raise NotImplementedError
+    end
+
+    private
+
+    def self.fetch_attribute(attribute, default=nil)
+      if self.instance_variable_defined?("@#{attribute}".to_sym)
+        self.instance_variable_get("@#{attribute}".to_sym)
+      elsif superclass.respond_to?(attribute.to_sym)
+        superclass.send(attribute.to_sym)
+      elsif EasyStalk.configuration.respond_to?("default_#{attribute}".to_sym)
+        EasyStalk.configuration.send("default_#{attribute}".to_sym)
+      else
+        default
+      end
     end
   end
 end
