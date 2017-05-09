@@ -10,7 +10,7 @@ namespace :easy_stalk do
 
     tubes = if args.extras.size > 0
               EasyStalk::Job.descendants.select do |job|
-                tubs.include?(job.tube_name)
+                tubs.include?(job.get_tube_name)
               end
             end
 

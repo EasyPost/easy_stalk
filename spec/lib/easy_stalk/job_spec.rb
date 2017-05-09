@@ -25,14 +25,14 @@ describe EasyStalk::Job do
       describe '.tube_name' do
         it 'defaults to class name' do
           EasyStalk.configure { |config| config.default_tube_prefix = "rating.test." }
-          expect(subject.tube_name).to eq "rating.test.MockJob"
+          expect(subject.get_tube_name).to eq "rating.test.MockJob"
         end
         it 'can be set manually' do
           class MockJobWithName < subject
             tube_name "bar"
           end
           EasyStalk.configure { |config| config.default_tube_prefix = "rating.test." }
-          expect(MockJobWithName.new.class.tube_name).to eq "rating.test.bar"
+          expect(MockJobWithName.new.class.get_tube_name).to eq "rating.test.bar"
           Object.send(:remove_const, :MockJobWithName)
         end
         it 'properly uses a prefix' do
@@ -40,7 +40,7 @@ describe EasyStalk::Job do
             tube_name "bar"
             tube_prefix "foo."
           end
-          expect(MockJobWithNameAndPrefix.new.class.tube_name).to eq "foo.bar"
+          expect(MockJobWithNameAndPrefix.new.class.get_tube_name).to eq "foo.bar"
           Object.send(:remove_const, :MockJobWithNameAndPrefix)
         end
         it 'properly uses an inherited prefix' do
@@ -50,7 +50,7 @@ describe EasyStalk::Job do
           class MockJobWithNameAndPrefix < MockJobWithName
             tube_name "bar"
           end
-          expect(MockJobWithNameAndPrefix.new.class.tube_name).to eq "foo.bar"
+          expect(MockJobWithNameAndPrefix.new.class.get_tube_name).to eq "foo.bar"
           Object.send(:remove_const, :MockJobWithName)
           Object.send(:remove_const, :MockJobWithNameAndPrefix)
         end
@@ -60,7 +60,7 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithoutName < MockJobWithName
           end
-          expect(MockChildJobWithoutName.new.class.tube_name).to eq "MockChildJobWithoutName"
+          expect(MockChildJobWithoutName.new.class.get_tube_name).to eq "MockChildJobWithoutName"
           Object.send(:remove_const, :MockJobWithName)
           Object.send(:remove_const, :MockChildJobWithoutName)
         end
@@ -71,7 +71,7 @@ describe EasyStalk::Job do
           class MockJobWithPrefix < subject
             tube_prefix "bar."
           end
-          expect(MockJobWithPrefix.new().class.tube_prefix).to eq "bar."
+          expect(MockJobWithPrefix.new().class.get_tube_prefix).to eq "bar."
           Object.send(:remove_const, :MockJobWithPrefix)
         end
         it 'uses inheritance if present' do
@@ -80,16 +80,16 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithPrefix < MockJobWithPrefix
           end
-          expect(MockChildJobWithPrefix.new().class.tube_prefix).to eq "bar."
+          expect(MockChildJobWithPrefix.new().class.get_tube_prefix).to eq "bar."
           Object.send(:remove_const, :MockJobWithPrefix)
           Object.send(:remove_const, :MockChildJobWithPrefix)
         end
         it 'uses the env if present' do
           EasyStalk.configure { |config| config.default_tube_prefix = "foo." }
-          expect(subject.tube_prefix).to eq "foo."
+          expect(subject.get_tube_prefix).to eq "foo."
         end
         it 'uses blank if no env' do
-          expect(subject.tube_prefix).to eq ""
+          expect(subject.get_tube_prefix).to eq ""
         end
       end
 
@@ -98,7 +98,7 @@ describe EasyStalk::Job do
           class MockJobWithPri < subject
             priority 25
           end
-          expect(MockJobWithPri.new().class.priority).to eq 25
+          expect(MockJobWithPri.new().class.get_priority).to eq 25
           Object.send(:remove_const, :MockJobWithPri)
         end
         it 'uses inheritance if present' do
@@ -107,12 +107,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithPri < MockJobWithPri
           end
-          expect(MockChildJobWithPri.new().class.priority).to eq 25
+          expect(MockChildJobWithPri.new().class.get_priority).to eq 25
           Object.send(:remove_const, :MockJobWithPri)
           Object.send(:remove_const, :MockChildJobWithPri)
         end
         it 'uses default if not set' do
-          expect(subject.priority).to eq EasyStalk::Configuration::DEFAULT_PRI
+          expect(subject.get_priority).to eq EasyStalk::Configuration::DEFAULT_PRI
         end
       end
 
@@ -121,7 +121,7 @@ describe EasyStalk::Job do
           class MockJobWithTtr < subject
             time_to_run 90
           end
-          expect(MockJobWithTtr.new().class.time_to_run).to eq 90
+          expect(MockJobWithTtr.new().class.get_time_to_run).to eq 90
           Object.send(:remove_const, :MockJobWithTtr)
         end
         it 'uses inheritance if present' do
@@ -130,12 +130,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithTtr < MockJobWithTtr
           end
-          expect(MockChildJobWithTtr.new().class.time_to_run).to eq 90
+          expect(MockChildJobWithTtr.new().class.get_time_to_run).to eq 90
           Object.send(:remove_const, :MockJobWithTtr)
           Object.send(:remove_const, :MockChildJobWithTtr)
         end
         it 'uses default if not set' do
-          expect(subject.time_to_run).to eq EasyStalk::Configuration::DEFAULT_TTR
+          expect(subject.get_time_to_run).to eq EasyStalk::Configuration::DEFAULT_TTR
         end
       end
 
@@ -144,7 +144,7 @@ describe EasyStalk::Job do
           class MockJobWithDelay < subject
             delay 5
           end
-          expect(MockJobWithDelay.new().class.delay).to eq 5
+          expect(MockJobWithDelay.new().class.get_delay).to eq 5
           Object.send(:remove_const, :MockJobWithDelay)
         end
         it 'uses inheritance if present' do
@@ -153,12 +153,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithDelay < MockJobWithDelay
           end
-          expect(MockChildJobWithDelay.new().class.delay).to eq 5
+          expect(MockChildJobWithDelay.new().class.get_delay).to eq 5
           Object.send(:remove_const, :MockJobWithDelay)
           Object.send(:remove_const, :MockChildJobWithDelay)
         end
         it 'uses default if not set' do
-          expect(subject.delay).to eq EasyStalk::Configuration::DEFAULT_DELAY
+          expect(subject.get_delay).to eq EasyStalk::Configuration::DEFAULT_DELAY
         end
       end
 
@@ -167,7 +167,7 @@ describe EasyStalk::Job do
           class MockJobWithRetryTimes < subject
             retry_times 5
           end
-          expect(MockJobWithRetryTimes.new().class.retry_times).to eq 5
+          expect(MockJobWithRetryTimes.new().class.get_retry_times).to eq 5
           Object.send(:remove_const, :MockJobWithRetryTimes)
         end
         it 'uses inheritance if present' do
@@ -176,12 +176,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithRetryTimes < MockJobWithRetryTimes
           end
-          expect(MockChildJobWithRetryTimes.new().class.retry_times).to eq 5
+          expect(MockChildJobWithRetryTimes.new().class.get_retry_times).to eq 5
           Object.send(:remove_const, :MockJobWithRetryTimes)
           Object.send(:remove_const, :MockChildJobWithRetryTimes)
         end
         it 'uses default if not set' do
-          expect(subject.retry_times).to eq EasyStalk::Configuration::DEFAULT_RETRY_TIMES
+          expect(subject.get_retry_times).to eq EasyStalk::Configuration::DEFAULT_RETRY_TIMES
         end
       end
 
@@ -190,7 +190,7 @@ describe EasyStalk::Job do
           class MockJobWithKeys < subject
             serializable_context_keys :cat, :dog
           end
-          expect(MockJobWithKeys.new().class.serializable_context_keys).to eq [:cat, :dog]
+          expect(MockJobWithKeys.new().class.get_serializable_context_keys).to eq [:cat, :dog]
           Object.send(:remove_const, :MockJobWithKeys)
         end
         it 'uses inheritance if present' do
@@ -199,12 +199,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithKeys < MockJobWithKeys
           end
-          expect(MockChildJobWithKeys.new().class.serializable_context_keys).to eq [:cat, :dog]
+          expect(MockChildJobWithKeys.new().class.get_serializable_context_keys).to eq [:cat, :dog]
           Object.send(:remove_const, :MockJobWithKeys)
           Object.send(:remove_const, :MockChildJobWithKeys)
         end
         it 'uses default if not set' do
-          expect(subject.serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_CONTEXT_KEYS
+          expect(subject.get_serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_CONTEXT_KEYS
         end
       end
     end
