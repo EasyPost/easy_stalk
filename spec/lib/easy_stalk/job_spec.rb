@@ -98,7 +98,7 @@ describe EasyStalk::Job do
           class MockJobWithPri < subject
             priority 25
           end
-          expect(MockJobWithPri.new().class.get_priority).to eq 25
+          expect(MockJobWithPri.new().priority).to eq 25
           Object.send(:remove_const, :MockJobWithPri)
         end
         it 'uses inheritance if present' do
@@ -107,12 +107,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithPri < MockJobWithPri
           end
-          expect(MockChildJobWithPri.new().class.get_priority).to eq 25
+          expect(MockChildJobWithPri.new().priority).to eq 25
           Object.send(:remove_const, :MockJobWithPri)
           Object.send(:remove_const, :MockChildJobWithPri)
         end
         it 'uses default if not set' do
-          expect(subject.get_priority).to eq EasyStalk::Configuration::DEFAULT_PRI
+          expect(subject.new().priority).to eq EasyStalk::Configuration::DEFAULT_PRI
         end
       end
 
@@ -121,7 +121,7 @@ describe EasyStalk::Job do
           class MockJobWithTtr < subject
             time_to_run 90
           end
-          expect(MockJobWithTtr.new().class.get_time_to_run).to eq 90
+          expect(MockJobWithTtr.new().time_to_run).to eq 90
           Object.send(:remove_const, :MockJobWithTtr)
         end
         it 'uses inheritance if present' do
@@ -130,12 +130,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithTtr < MockJobWithTtr
           end
-          expect(MockChildJobWithTtr.new().class.get_time_to_run).to eq 90
+          expect(MockChildJobWithTtr.new().time_to_run).to eq 90
           Object.send(:remove_const, :MockJobWithTtr)
           Object.send(:remove_const, :MockChildJobWithTtr)
         end
         it 'uses default if not set' do
-          expect(subject.get_time_to_run).to eq EasyStalk::Configuration::DEFAULT_TTR
+          expect(subject.new().time_to_run).to eq EasyStalk::Configuration::DEFAULT_TTR
         end
       end
 
@@ -144,7 +144,7 @@ describe EasyStalk::Job do
           class MockJobWithDelay < subject
             delay 5
           end
-          expect(MockJobWithDelay.new().class.get_delay).to eq 5
+          expect(MockJobWithDelay.new().delay).to eq 5
           Object.send(:remove_const, :MockJobWithDelay)
         end
         it 'uses inheritance if present' do
@@ -153,12 +153,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithDelay < MockJobWithDelay
           end
-          expect(MockChildJobWithDelay.new().class.get_delay).to eq 5
+          expect(MockChildJobWithDelay.new().delay).to eq 5
           Object.send(:remove_const, :MockJobWithDelay)
           Object.send(:remove_const, :MockChildJobWithDelay)
         end
         it 'uses default if not set' do
-          expect(subject.get_delay).to eq EasyStalk::Configuration::DEFAULT_DELAY
+          expect(subject.new().delay).to eq EasyStalk::Configuration::DEFAULT_DELAY
         end
       end
 
@@ -190,7 +190,7 @@ describe EasyStalk::Job do
           class MockJobWithKeys < subject
             serializable_context_keys :cat, :dog
           end
-          expect(MockJobWithKeys.new().class.get_serializable_context_keys).to eq [:cat, :dog]
+          expect(MockJobWithKeys.new().serializable_context_keys).to eq [:cat, :dog]
           Object.send(:remove_const, :MockJobWithKeys)
         end
         it 'uses inheritance if present' do
@@ -199,12 +199,12 @@ describe EasyStalk::Job do
           end
           class MockChildJobWithKeys < MockJobWithKeys
           end
-          expect(MockChildJobWithKeys.new().class.get_serializable_context_keys).to eq [:cat, :dog]
+          expect(MockChildJobWithKeys.new().serializable_context_keys).to eq [:cat, :dog]
           Object.send(:remove_const, :MockJobWithKeys)
           Object.send(:remove_const, :MockChildJobWithKeys)
         end
         it 'uses default if not set' do
-          expect(subject.get_serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_CONTEXT_KEYS
+          expect(subject.new().serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_CONTEXT_KEYS
         end
       end
     end

@@ -25,36 +25,6 @@ module EasyStalk
       EasyStalk.configuration.default_tube_prefix
     end
 
-    def self.priority(pri=nil)
-      # integer < 2**32. 0 is highest
-      define_singleton_method :get_priority do
-        pri
-      end
-    end
-    def self.get_priority
-      EasyStalk.configuration.default_priority
-    end
-
-    def self.time_to_run(seconds=nil)
-      # integer seconds to run this job
-      define_singleton_method :get_time_to_run do
-        seconds
-      end
-    end
-    def self.get_time_to_run
-      EasyStalk.configuration.default_time_to_run
-    end
-
-    def self.delay(seconds=nil)
-      # integer seconds before job is in ready queue
-      define_singleton_method :get_delay do
-        seconds
-      end
-    end
-    def self.get_delay
-      EasyStalk.configuration.default_delay
-    end
-
     def self.retry_times(attempts=nil)
       # max number of times to retry job before burying
       define_singleton_method :get_retry_times do
@@ -65,20 +35,50 @@ module EasyStalk
       EasyStalk.configuration.default_retry_times
     end
 
+    def self.priority(pri=nil)
+      # integer < 2**32. 0 is highest
+      define_method :priority do
+        pri
+      end
+    end
+    def priority
+      EasyStalk.configuration.default_priority
+    end
+
+    def self.time_to_run(seconds=nil)
+      # integer seconds to run this job
+      define_method :time_to_run do
+        seconds
+      end
+    end
+    def time_to_run
+      EasyStalk.configuration.default_time_to_run
+    end
+
+    def self.delay(seconds=nil)
+      # integer seconds before job is in ready queue
+      define_method :delay do
+        seconds
+      end
+    end
+    def delay
+      EasyStalk.configuration.default_delay
+    end
+
     def self.serializable_context_keys(*keys)
-      define_singleton_method :get_serializable_context_keys do
+      define_method :serializable_context_keys do
         keys
       end
     end
-    def self.get_serializable_context_keys
+    def serializable_context_keys
       DEFAULT_SERIALIZABLE_CONTEXT_KEYS
     end
 
     def enqueue(beanstalk_connection, priority: nil, time_to_run: nil, delay: nil, delay_until: nil)
       tube = beanstalk_connection.tubes[self.class.get_tube_name]
-      pri = priority || self.class.get_priority
-      ttr = time_to_run || self.class.get_time_to_run
-      delay = delay || self.class.get_delay
+      pri = priority || self.priority
+      ttr = time_to_run || self.time_to_run
+      delay = delay || self.delay
 
       if delay_until && DateTime === delay_until
         days = delay_until - DateTime.now
@@ -89,7 +89,7 @@ module EasyStalk
     end
 
     def job_data
-      data = context.to_h.select { |key, value| self.class.get_serializable_context_keys.include? key }
+      data = context.to_h.select { |key, value| self.serializable_context_keys.include? key }
       JSON.dump(data)
     end
 
