@@ -20,9 +20,7 @@ describe EasyStalk::Worker do
     context "with a valid job class" do
       before do
         class ValidJob < EasyStalk::Job
-          def self.tube_name
-            "job_tube"
-          end
+          tube_name "job_tube"
 
           def call
           end
@@ -44,7 +42,7 @@ describe EasyStalk::Worker do
         expect(Beaneater).to receive(:new).and_return beanstalk
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
         expect(tubes).to receive(:watch!).with("job_tube")
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.get_tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
           if @count < 2
@@ -64,7 +62,7 @@ describe EasyStalk::Worker do
         tubes = EasyStalk::MockBeaneater::Tubes.new
         expect(EzPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.get_tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
           if @count < 2
@@ -90,7 +88,7 @@ describe EasyStalk::Worker do
         tubes = EasyStalk::MockBeaneater::Tubes.new
         expect(EzPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.get_tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
           if @count < 2
@@ -129,7 +127,7 @@ describe EasyStalk::Worker do
         tubes.watch!(ValidJob)
         expect(EzPool).to receive(:new).and_return mocked_client
         expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.get_tube_name)
         expect(tubes).to receive(:reserve) {
           @count ||= 0
           if @count < 2
@@ -172,7 +170,7 @@ describe EasyStalk::Worker do
             subject.send :cleanup
             nil
           else
-            job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, ValidJob.tube_name, @count)
+            job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, ValidJob.get_tube_name, @count)
             expect(job).to receive(:bury) if @count == 3
             job
           end

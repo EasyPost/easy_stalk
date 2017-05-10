@@ -23,7 +23,7 @@ module EasyStalk
       @cancelled = false
 
       tube_class_hash = Hash[
-        job_classes.map { |cls| [cls.tube_name, cls] }
+        job_classes.map { |cls| [cls.get_tube_name, cls] }
       ]
 
       pool = EasyStalk::Client.create_worker_pool(tube_class_hash.keys)
@@ -40,7 +40,8 @@ module EasyStalk
           rescue => ex
             # Job issued a failed context or raised an unhandled exception
             job_class = tube_class_hash[job.tube]
-            if job.stats.releases <= job_class.retry_times
+
+            if job.stats.releases <= job_class.get_retry_times
               # Re-enqueue with stepped delay
               release_with_delay(job)
             else
@@ -54,7 +55,7 @@ module EasyStalk
         end
       end
 
-      jobs_list = job_classes.map { |job_class| "#{job_class} on tube #{job_class.tube_name}" }.join(", ")
+      jobs_list = job_classes.map { |job_class| "#{job_class} on tube #{job_class.get_tube_name}" }.join(", ")
       EasyStalk.logger.info "Worker running #{jobs_list} has been stopped"
     end
 
