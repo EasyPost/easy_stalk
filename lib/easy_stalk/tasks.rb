@@ -8,11 +8,11 @@ namespace :easy_stalk do
   task :work => :environment do |task, args|
     ::Rails.application.eager_load! if defined?(::Rails)
 
-    tubes = if args.extras.size > 0
-              EasyStalk::Job.descendants.select do |job|
-                tubs.include?(job.tube_name)
-              end
-            end
+    name_to_class = Hash[EasyStalk::Job.descendants.map { |cls| [cls.tube_name, cls] }]
+    tubes = args.extras.map do |tube_name|
+      raise "Invalid tube: #{tube_name}" unless name_to_class.include?(tube_name)
+      name_to_class[tube_name]
+    end
 
     EasyStalk::Worker.new().work(tubes)
   end
