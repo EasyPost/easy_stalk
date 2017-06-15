@@ -9,8 +9,8 @@ module EasyStalk
     RESERVE_TIMEOUT = 3
 
     def work(job_classes = nil, on_fail: nil)
-      job_classes = EasyStalk::Job.descendants unless job_classes
       job_classes = [job_classes] unless job_classes.instance_of?(Array)
+      job_classes = EasyStalk::Job.descendants if job_classes.compact.empty?
 
       job_classes.each do |job_class|
         raise ArgumentError, "#{job_class} is not a valid EasyStalk::Job subclass" unless Class === job_class && job_class < EasyStalk::Job
