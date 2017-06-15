@@ -26,6 +26,8 @@ describe EasyStalk::Client do
       job = TestBeanstalkJob.new
       expect(job).to receive(:enqueue)
       expect { subject.enqueue(job) }.to_not raise_error
+      Object.send(:remove_const, :NonEasyStalkJob)
+      Object.send(:remove_const, :TestBeanstalkJob)
     end
 
   end

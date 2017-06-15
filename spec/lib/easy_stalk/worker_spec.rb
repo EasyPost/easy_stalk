@@ -57,6 +57,50 @@ describe EasyStalk::Worker do
         expect { subject.work(job_instance.class) }.to_not raise_error
       end
 
+      specify "passing in nil will work all jobs" do
+        expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
+        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        beanstalk = EasyStalk::MockBeaneater.new
+        tubes = EasyStalk::MockBeaneater::Tubes.new
+        tubes.watch!(ValidJob)
+        expect(Beaneater).to receive(:new).and_return beanstalk
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(tubes).to receive(:watch!).with("job_tube")
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        expect(tubes).to receive(:reserve) {
+          @count ||= 0
+          if @count < 2
+            @count = @count + 1
+          else
+            subject.send :cleanup
+          end
+          sample_job
+        }.exactly(3).times
+        expect { subject.work() }.to_not raise_error
+      end
+
+      specify "passing in an empty array will work all jobs" do
+        expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
+        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        beanstalk = EasyStalk::MockBeaneater.new
+        tubes = EasyStalk::MockBeaneater::Tubes.new
+        tubes.watch!(ValidJob)
+        expect(Beaneater).to receive(:new).and_return beanstalk
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(tubes).to receive(:watch!).with("job_tube")
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        expect(tubes).to receive(:reserve) {
+          @count ||= 0
+          if @count < 2
+            @count = @count + 1
+          else
+            subject.send :cleanup
+          end
+          sample_job
+        }.exactly(3).times
+        expect { subject.work([]) }.to_not raise_error
+      end
+
       specify "raising exception will trigger a failure" do
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
         beanstalk = EasyStalk::MockBeaneater.new
@@ -122,6 +166,7 @@ describe EasyStalk::Worker do
       let(:job_instance) { ValidJob.new }
 
       specify do
+        expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
         beanstalk = EasyStalk::MockBeaneater.new
         mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
