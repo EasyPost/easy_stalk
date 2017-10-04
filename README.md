@@ -134,10 +134,12 @@ end
 When adding tests for your code you have the ability to run your tests via the standard beanstalk tube and workers, or to run the jobs immediately.
 To activate the immediate job runner you can add the following command to your test code (e.g. in the before hook):
 ```
+require "easy_stalk/test"
 EasyStalk::Extensions::ImmediateJobRunner.activate!
 ```
 To deactivate the immediate job runner you can add the following command to your test code (e.g. in the after hook):
 ```
+require "easy_stalk/test" 
 EasyStalk::Extensions::ImmediateJobRunner.deactivate!
 ```
 Please note, after activate the ImmediateJobRunner all subsequent jobs will be run immediately.
