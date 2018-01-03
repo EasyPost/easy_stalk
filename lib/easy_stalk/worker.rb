@@ -40,7 +40,7 @@ module EasyStalk
           rescue => ex
             # Job issued a failed context or raised an unhandled exception
             job_class = tube_class_hash[job.tube]
-            if job.stats.releases <= job_class.retry_times
+            if job.stats.releases < job_class.retry_times
               # Re-enqueue with stepped delay
               release_with_delay(job)
             else
