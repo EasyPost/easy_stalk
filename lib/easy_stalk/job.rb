@@ -69,8 +69,15 @@ module EasyStalk
       end
     end
 
-    def enqueue(beanstalk_connection, priority: nil, time_to_run: nil, delay: nil, delay_until: nil)
-      tube = beanstalk_connection.tubes[self.class.tube_name]
+    def enqueue(
+      beanstalk_connection,
+      priority: nil,
+      time_to_run: nil,
+      delay: nil,
+      delay_until: nil,
+      tube_name: nil
+    )
+      tube = beanstalk_connection.tubes[tube_name || self.class.tube_name]
       pri = priority || self.class.priority
       ttr = time_to_run || self.class.time_to_run
       delay = delay || self.class.delay

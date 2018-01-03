@@ -8,10 +8,28 @@ module EasyStalk
       @pool ||= create_pool
     end
 
-    def self.enqueue(job, priority: nil, time_to_run: nil, delay: nil, delay_until: nil)
+    def self.enqueue(
+      job,
+      priority: nil,
+      time_to_run: nil,
+      delay: nil,
+      delay_until: nil,
+      tube_name: nil,
+      **kwargs
+    )
       instance.with do |conn|
-        raise ArgumentError, "Unable to enqueue non-EasyStalk Job" unless job.class < EasyStalk::Job
-        job.enqueue conn, priority: priority, time_to_run: time_to_run, delay: delay, delay_until: delay_until
+        unless job.class < EasyStalk::Job
+          raise ArgumentError, "Unable to enqueue non-EasyStalk Job"
+        end
+
+        job.enqueue(
+          conn,
+          priority: priority,
+          time_to_run: time_to_run,
+          delay: delay,
+          delay_until: delay_until,
+          tube_name: tube_name
+        )
       end
     end
 
