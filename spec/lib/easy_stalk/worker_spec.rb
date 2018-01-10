@@ -57,6 +57,36 @@ describe EasyStalk::Worker do
         expect { subject.work(job_instance.class) }.to_not raise_error
       end
 
+      specify "pool disconnects on max_age cycle" do
+        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        beanstalk = EasyStalk::MockBeaneater.new
+        tubes = EasyStalk::MockBeaneater::Tubes.new
+        tubes.watch!(ValidJob)
+
+        # Set the age of the connection to simulate a max_age rotation
+        age_count = 0
+        allow_any_instance_of(EzPool::ConnectionWrapper).to receive(:age) do
+          age_count += 1
+          age_count == 1 ? 400 : 0
+        end
+
+        expect(Beaneater).to receive(:new).twice.and_return beanstalk
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(beanstalk).to receive(:close)
+        expect(tubes).to receive(:watch!).twice.with("job_tube")
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        expect(tubes).to receive(:reserve) {
+          @count ||= 0
+          if @count < 2
+            @count = @count + 1
+          else
+            subject.send :cleanup
+          end
+          sample_job
+        }.exactly(3).times
+        expect { subject.work(job_instance.class) }.to_not raise_error
+      end
+
       specify "passing in nil will work all jobs" do
         expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
         expect(EasyStalk.logger).to receive(:info).at_least(1).times
