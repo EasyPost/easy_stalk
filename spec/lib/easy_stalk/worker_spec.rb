@@ -231,7 +231,7 @@ describe EasyStalk::Worker do
         Object.send(:remove_const, :ValidJob)
       end
 
-      specify "buries the job after retry_times +1 attempt" do
+      specify "buries the job after retry_times attempts" do
         EasyStalk.configuration.default_worker_on_fail = Proc.new {}
         expect(EasyStalk.logger).to receive(:info).at_least(2).times {}
         beanstalk = EasyStalk::MockBeaneater.new
@@ -248,7 +248,7 @@ describe EasyStalk::Worker do
             nil
           else
             job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, ValidJob.tube_name, @count)
-            expect(job).to receive(:bury) if @count == 3
+            expect(job).to receive(:bury) if @count == 2
             job
           end
         }.exactly(4).times
