@@ -6,13 +6,24 @@ This gem aims to provide a very simple way to use [beanstalkd](https://github.co
 
 There are 3 main concepts presented: a Job, a Client, and a Worker.
 
+
+### Updates
+
+To update EasyStalk, please make sure the appropriate changes are made in the following places:
+* `easy_stalk.gemspec`
+* `lib/easy_stalk.rb`
+* `CHANGELOG.md`
+
+In addition, please rebundle the gems so that the version in `Gemfile.lock` gets updated.
+
+
 ### EasyStalk::Job
 
 EasyStalk::Job is a simple class based on the [interactor gem](https://github.com/collectiveidea/interactor).
 The only requirements are to inherit from `EasyStalk::Job`, define the keys to serialize using the `serialize_context_keys` method, and implement a call method that has access to an object name 'context', which is essentially an ostruct with your serializable keys on it.
 
 When constructing your job, just pass in a hash (or an Interactor::Context), and any keys not defined in `serializable_context_keys` will be sanitized out upon enqueue.
-Enqueing the Job will place it in the appropriate beanstalkd queue, with the defined job settings and context data specified by the `serializable_context_keys`. 
+Enqueing the Job will place it in the appropriate beanstalkd queue, with the defined job settings and context data specified by the `serializable_context_keys`.
 
 ```ruby
 class TextPrintingJob < EasyStalk::Job
@@ -139,7 +150,7 @@ EasyStalk::Extensions::ImmediateJobRunner.activate!
 ```
 To deactivate the immediate job runner you can add the following command to your test code (e.g. in the after hook):
 ```
-require "easy_stalk/test" 
+require "easy_stalk/test"
 EasyStalk::Extensions::ImmediateJobRunner.deactivate!
 ```
 Please note, after activate the ImmediateJobRunner all subsequent jobs will be run immediately.
