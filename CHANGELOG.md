@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0 (2018-01-09)
+
+ - Fixed off-by-one error in retry_times. Retry_times values MUST BE INCREMENTED BY 1 to maintain old behavior
+ - Fixed bug where connections are leaked when max_age is reached and new connections are created
+ - Added white- and black-listing worker tubes
+
 ## 0.0.10 (2017-06-14)
 
  - Fix bug with worker rake task
