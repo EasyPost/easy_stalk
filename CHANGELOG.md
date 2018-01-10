@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 (2018-01-10)
+
+ - Fixed bug in 'immediate job runner' testing infrastructure
+
 ## 0.1.0 (2018-01-09)
 
  - Fixed off-by-one error in retry_times. Retry_times values MUST BE INCREMENTED BY 1 to maintain old behavior
