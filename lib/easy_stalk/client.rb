@@ -20,9 +20,9 @@ module EasyStalk
       conns = config.beanstalkd_urls.shuffle
       i = 0
       # workers should only ever run a single thread to talk to beanstalk;
-      # set the pool size t "1" and the timeout low to ensure that we don't
+      # set the pool size to "1" and the timeout low to ensure that we don't
       # ever violate that
-      instance = EzPool.new(size: 1, timeout: 1, max_age: config.worker_reconnect_seconds) do
+      instance = EzPool.new(size: 1, timeout: 1, max_age: config.worker_reconnect_seconds, disconnect_with: lambda{ |client| client.close }) do
         # rotate through the connections fairly
         client = Beaneater.new(conns[i])
         i = (i + 1) % conns.length
