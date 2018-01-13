@@ -17,8 +17,8 @@ namespace :easy_stalk do
     #   - some tube names prefixed with "-" (run all tubes except those)
     requested_tubes = args[:tubes].nil? ? [] : args[:tubes].split
 
-    included_tubes = requested_tubes.select { |c| !c.starts_with? '-' }
-    excluded_tubes = requested_tubes.select { |c| c.starts_with? '-' }.map { |c| c[1..-1] }
+    included_tubes = requested_tubes.select { |c| !c.start_with? '-' }
+    excluded_tubes = requested_tubes.select { |c| c.start_with? '-' }.map { |c| c[1..-1] }
 
     # build a set of candidate tubes to consume from.
     tubes = if included_tubes.empty?
