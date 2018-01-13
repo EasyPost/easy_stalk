@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 (2018-01-12)
+
+ - Fixed bug in rake task that broke compatibility with non-Rails systems
+
 ## 0.1.1 (2018-01-10)
 
  - Fixed bug in 'immediate job runner' testing infrastructure
