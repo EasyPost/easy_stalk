@@ -1,5 +1,7 @@
 # EasyStalk
 
+[![Build Status](https://travis-ci.org/EasyPost/easy_stalk.svg?branch=master)](https://travis-ci.org/EasyPost/easy_stalk)
+
 A simple beanstalkd client for ruby
 
 This gem aims to provide a very simple way to use [beanstalkd](https://github.com/kr/beanstalkd) for asynchronous jobs in your ruby applications.
