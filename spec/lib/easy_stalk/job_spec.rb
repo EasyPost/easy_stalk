@@ -1,5 +1,7 @@
 require 'spec_helper'
 
+require 'date'
+
 
 describe EasyStalk::Job do
 
