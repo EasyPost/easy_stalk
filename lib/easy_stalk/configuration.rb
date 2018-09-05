@@ -137,7 +137,7 @@ module EasyStalk
       end
     end
 
-    def worker_shutdown_after_jobs(jobs)
+    def worker_shutdown_after_jobs=(jobs)
       if jobs.is_a? Range
         @worker_shutdown_after_jobs = jobs
       else
