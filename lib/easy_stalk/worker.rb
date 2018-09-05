@@ -26,7 +26,16 @@ module EasyStalk
         job_classes.map { |cls| [cls.tube_name, cls] }
       ]
 
+      shutdown_after_jobs = EasyStalk.configuration.worker_shutdown_after_jobs
+      if shutdown_after_jobs.end > 0
+        shutdown_after_jobs = rand shutdown_after_jobs
+      else
+        shutdown_after_jobs = nil
+      end
+
       pool = EasyStalk::Client.create_worker_pool(tube_class_hash.keys)
+
+      n_processed = 0
 
       while !@cancelled
         pool.with do |beanstalk|
@@ -34,6 +43,7 @@ module EasyStalk
           # continue around the loop if we got a timeout reserving a job
           # (that is to say, if there's nothing in this tube)
           next unless job
+          n_processed += 1
           begin
             job_class = tube_class_hash[job.tube]
             job_class.call!(JSON.parse(job.body))
@@ -51,6 +61,9 @@ module EasyStalk
             # Job Succeeded!
             job.delete
           end
+        end
+        if !shutdown_after_jobs.nil? and n_processed > shutdown_after_jobs
+          @cancelled = true
         end
       end
 
