@@ -55,7 +55,7 @@ module EasyStalk
           self.worker_shutdown_after_jobs = DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
         end
       else
-        self.shutdown_after_jobs = DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
+        self.worker_shutdown_after_jobs = DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
       end
     end
 
