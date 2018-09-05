@@ -255,5 +255,34 @@ describe EasyStalk::Worker do
         expect { subject.work }.to_not raise_error
       end
     end
+
+    context "with a shutdown configured" do
+      before do
+        class ValidJob < EasyStalk::Job
+          def call
+          end
+        end
+      end
+
+      after do
+        Object.send(:remove_const, :ValidJob)
+      end
+
+      specify "cancels after the expected number of jobs" do
+        EasyStalk.configuration.worker_shutdown_after_jobs = 2
+        beanstalk = EasyStalk::MockBeaneater.new
+        mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
+        tubes = EasyStalk::MockBeaneater::Tubes.new
+        tubes.watch!(ValidJob)
+        expect(EzPool).to receive(:new).and_return mocked_client
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(tubes).to receive(:reserve) {
+            job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, ValidJob.tube_name, 0)
+            expect(job).to receive(:delete)
+            job
+        }.exactly(2).times
+        expect { subject.work }.to_not raise_error
+      end
+    end
   end
 end

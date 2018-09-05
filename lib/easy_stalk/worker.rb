@@ -29,6 +29,7 @@ module EasyStalk
       shutdown_after_jobs = EasyStalk.configuration.worker_shutdown_after_jobs
       if shutdown_after_jobs.end > 0
         shutdown_after_jobs = rand shutdown_after_jobs
+        EasyStalk.logger.info "Worker will automatically shut down after #{shutdown_after_jobs} jobs"
       else
         shutdown_after_jobs = nil
       end
@@ -62,8 +63,9 @@ module EasyStalk
             job.delete
           end
         end
-        if !shutdown_after_jobs.nil? and n_processed > shutdown_after_jobs
-          @cancelled = true
+        if !shutdown_after_jobs.nil? and n_processed >= shutdown_after_jobs
+          EasyStalk.logger.info "Worker has processed #{n_processed} jobs and is now shutting down"
+          cleanup
         end
       end
 
