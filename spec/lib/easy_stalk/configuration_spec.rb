@@ -206,6 +206,34 @@ describe EasyStalk::Configuration do
     end
   end
 
+  describe "#worker_shutdown_after_jobs" do
+    specify "gets default if not provided" do
+      expect(subject.worker_shutdown_after_jobs).to eq described_class::DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
+    end
+    specify "gets env if set to range" do
+      stub_const "ENV", {"BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS" => "1-3"}
+      expect(subject.worker_shutdown_after_jobs).to eq 1..3
+    end
+    specify "gets env if set to value" do
+      stub_const "ENV", {"BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS" => "100"}
+      expect(subject.worker_shutdown_after_jobs).to eq 100..100
+    end
+  end
+  describe "#worker_shutdown_after_jobs=" do
+    specify "takes ranges" do
+      subject.worker_shutdown_after_jobs = 1..10
+      expect(subject.worker_shutdown_after_jobs).to eq 1..10
+    end
+    specify "takes ints" do
+      subject.worker_shutdown_after_jobs = 1000
+      expect(subject.worker_shutdown_after_jobs).to eq 1000..1000
+    end
+    specify "falls back to defaults if given garbage" do
+      subject.worker_shutdown_after_jobs = {}
+      expect(subject.worker_shutdown_after_jobs).to eq 0..0
+    end
+  end
+
 end
 =begin
 

@@ -48,9 +48,9 @@ module EasyStalk
 
       if ENV['BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS']
         if /^(\d+)\s*-\s*(\d+)$/.match(ENV['BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS'])
-          self.worker_shutdown_after_jobs = Range($1, $2)
+          self.worker_shutdown_after_jobs = Range.new($1.to_i, $2.to_i)
         elsif /^(\d+)$/.match(ENV['BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS'])
-          self.worker_shutdown_after_jobs = Range($1, $1)
+          self.worker_shutdown_after_jobs = Range.new($1.to_i, $1.to_i)
         else
           logger.warn "Invalid worker_shutdown_after_jobs #{ENV['BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS']}. Using default."
           self.worker_shutdown_after_jobs = DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
@@ -141,6 +141,8 @@ module EasyStalk
     def worker_shutdown_after_jobs=(jobs)
       if jobs.is_a? Range
         @worker_shutdown_after_jobs = jobs
+      elsif jobs.respond_to?(:to_i)
+        @worker_shutdown_after_jobs = Range.new(jobs.to_i, jobs.to_i)
       else
         logger.warn "Invalid worker_shutdown_after_jobs #{jobs}. Using default."
         @worker_shutdown_after_jobs = DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
