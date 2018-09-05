@@ -11,7 +11,8 @@ module EasyStalk
                 :beanstalkd_urls,
                 :pool_size,
                 :timeout_seconds,
-                :worker_reconnect_seconds
+                :worker_reconnect_seconds,
+                :worker_shutdown_after_jobs
 
     DEFAULT_POOL_SIZE = 5
     DEFAULT_TIMEOUT_SECONDS = 10
