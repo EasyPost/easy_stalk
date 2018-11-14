@@ -73,7 +73,7 @@ The client contains a reference to a singleton [connection pool](https://github.
 
 The client requires an ENV var of `BEANSTALKD_URLS` to be present, which contains a comma separated string of host:port combinations which are randomly selected for connections.
 
-Other configurable values are `BEANSTALKD_TIMEOUT_SECONDS` which defaults to 10, and `BEANSTALKD_POOL_SIZE` which defaults to 30, and are passed along to the connection pool.
+Other configurable values are `BEANSTALKD_TIMEOUT_SECONDS` which defaults to 10, and `BEANSTALKD_POOL_SIZE` which defaults to 5, and are passed along to the connection pool.
 
 Using the client is as simple as calling `EasyStalk::Client.enqueue(job_instance)`.
 By default, the job's default time_to_run, priority, and delay will be used, and the job will be scheduled to run immediately.
