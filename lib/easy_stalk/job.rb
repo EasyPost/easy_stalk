@@ -1,10 +1,11 @@
 require 'interactor'
-require_relative 'descendant_tracking'
+require 'descendants_tracker'
 
 module EasyStalk
   class Job
+    extend DescendantsTracker
     include Interactor
-    include EasyStalk::DescendantTracking
+
 
     SECONDS_IN_DAY = 24 * 60 * 60
     DEFAULT_SERIALIZABLE_CONTEXT_KEYS = []
