@@ -232,8 +232,9 @@ describe EasyStalk::Worker do
       end
 
       specify "buries the job after retry_times attempts" do
-        EasyStalk.configuration.default_worker_on_fail = Proc.new {}
+        expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
         expect(EasyStalk.logger).to receive(:info).at_least(2).times {}
+        EasyStalk.configuration.default_worker_on_fail = Proc.new {}
         beanstalk = EasyStalk::MockBeaneater.new
         mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
