@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'easy_stalk'
-  s.version     = '0.1.2'
-  s.date        = '2018-01-12'
+  s.version     = '0.1.3'
+  s.date        = '2018-12-06'
   s.summary     = 'EasyStalk - An easy way to use beanstalkd for jobs'
   s.description = 'A simple beanstalk client, worker, and job setup'
   s.authors     = ['Jing-ta Chow']
