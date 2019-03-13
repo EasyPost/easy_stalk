@@ -35,18 +35,24 @@ module EasyStalk
 
     def self.create_worker_pool(tubes, config=EasyStalk.configuration)
       raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
+
+      conns = config.beanstalkd_urls.shuffle
+      i = rand(conns.size)
+
       # workers should only ever run a single thread to talk to beanstalk;
       # set the pool size to "1" and the timeout low to ensure that we don't
       # ever violate that
       instance = EzPool.new(size: 1, timeout: 1, max_age: config.worker_reconnect_seconds, disconnect_with: lambda{ |client| client.close }) do
-        # rotate through the connections fairly
-        beanstalkd_url = config.beanstalkd_urls.sample
-
         EasyStalk.logger.info "Watching tubes #{tubes} for jobs"
 
-        Beaneater.new(beanstalkd_url).tap do |conn|
+        client = Beaneater.new(conns[i]).tap do |conn|
           conn.tubes.watch!(*tubes)
         end
+
+        # rotate through the connections fairly
+        i = (i + 1) % conns.length
+
+        client
       end
       instance
     end
