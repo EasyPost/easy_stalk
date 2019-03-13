@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0 (2019-03-12)
+
+ - Allow use of wildcards in EasyStalk::Worker initiation
+ - Lowered the default worker reconnect timeout to 10 seconds to allow faster worker rotations on instances
+
 ## 0.1.3 (2018-12-06)
 
  - Fixed bug where subclasses of EasyStalk::Job could not be used as an Abstract Base Class
