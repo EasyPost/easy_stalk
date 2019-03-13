@@ -102,7 +102,7 @@ If a Job raises an exception, or otherwise is failed using Interactor's context.
 If you wish to override the job failure logging, you can pass in an object that responds to call to the `work` function as a named parameter called `on_fail`.
 This will be passed the job class object, the job data as a string, and the exception that was raised for logging or alerting purposes.
 
-The worker pool rotates through the available beanstalk instances randomly with a default reconnect timeout of 10 seconds, you can override the reconnect timeout by setting the `DEFAULT_WORKER_RECONNECT_SECONDS` environment variable.
+The worker pool rotates through the available beanstalk instances randomly with a default reconnect timeout of 10 seconds, you can override the reconnect timeout by setting the `BEANSTALKD_WORKER_RECONNECT_SECONDS` environment variable.
 
 ```ruby
 failure_handler = Proc.new { |job_class, job_data, ex| EasyStalk.logger.error "#{ex.message} - #{job_data}" }
