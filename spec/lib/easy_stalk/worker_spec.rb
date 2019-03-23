@@ -9,12 +9,16 @@ describe EasyStalk::Worker do
         config.beanstalkd_urls = "::mocked::"
       end
     end
+
     after do
       EasyStalk.configure
     end
 
     context "with an invalid job class" do
-      it { expect { subject.work(Hash) }.to raise_error ArgumentError, "Hash is not a valid EasyStalk::Job subclass" }
+      specify do
+        expect { subject.work(Hash) }
+          .to raise_error ArgumentError, "Hash is not a valid EasyStalk::Job subclass"
+      end
     end
 
     context "with a valid job class" do
@@ -24,41 +28,61 @@ describe EasyStalk::Worker do
             "job_tube"
           end
 
-          def call
-          end
+          def call; end
         end
       end
+
       after do
         Object.send(:remove_const, :ValidJob)
       end
 
       let(:job_instance) { ValidJob.new }
 
-      it { expect { subject.work(job_instance) }.to raise_error ArgumentError, "#{job_instance} is not a valid EasyStalk::Job subclass" }
-
       specify do
-        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        expect(job_instance.class).to receive(:call!).with(
+          job_stats: anything,
+          foo: "bar"
+        ).exactly(3).times.and_call_original
+        expect(EasyStalk.logger).to receive(:info).at_least :once
+
         beanstalk = EasyStalk::MockBeaneater.new
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
+
         expect(Beaneater).to receive(:new).and_return beanstalk
-        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least :once
         expect(tubes).to receive(:watch!).with("job_tube")
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new(
+          '{"foo": "bar"}',
+          nil,
+          nil,
+          nil,
+          job_instance.class.tube_name
+        )
+
+        count = 0
         expect(tubes).to receive(:reserve) {
-          @count ||= 0
-          if @count < 2
-            @count = @count + 1
+          if count < 2
+            count += 1
           else
             subject.send :cleanup
           end
           sample_job
         }.exactly(3).times
+
         expect { subject.work(job_instance.class) }.to_not raise_error
       end
 
+      specify "job class not being watched" do
+        expect { subject.work(job_instance) }.to raise_error(
+          ArgumentError,
+          "#{job_instance} is not a valid EasyStalk::Job subclass"
+        )
+      end
+
       specify "pool disconnects on max_age cycle" do
-        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        expect(EasyStalk.logger).to receive(:info).at_least :once
         beanstalk = EasyStalk::MockBeaneater.new
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
@@ -71,112 +95,170 @@ describe EasyStalk::Worker do
         end
 
         expect(Beaneater).to receive(:new).twice.and_return beanstalk
-        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least :once
         expect(beanstalk).to receive(:close)
         expect(tubes).to receive(:watch!).twice.with("job_tube")
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new(
+          "{}",
+          nil,
+          nil,
+          nil,
+          job_instance.class.tube_name
+        )
+
+        count = 0
         expect(tubes).to receive(:reserve) {
-          @count ||= 0
-          if @count < 2
-            @count = @count + 1
+          count ||= 0
+          if count < 2
+            count += 1
           else
             subject.send :cleanup
           end
           sample_job
         }.exactly(3).times
+
         expect { subject.work(job_instance.class) }.to_not raise_error
       end
 
       specify "passing in nil will work all jobs" do
         expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
-        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        expect(EasyStalk.logger).to receive(:info).at_least :once
+
         beanstalk = EasyStalk::MockBeaneater.new
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
+
         expect(Beaneater).to receive(:new).and_return beanstalk
-        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least :once
         expect(tubes).to receive(:watch!).with("job_tube")
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new(
+          "{}",
+          nil,
+          nil,
+          nil,
+          job_instance.class.tube_name
+        )
+
+        count = 0
         expect(tubes).to receive(:reserve) {
-          @count ||= 0
-          if @count < 2
-            @count = @count + 1
+          if count < 2
+            count += 1
           else
             subject.send :cleanup
           end
           sample_job
         }.exactly(3).times
+
         expect { subject.work() }.to_not raise_error
       end
 
       specify "passing in an empty array will work all jobs" do
         expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
-        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        expect(EasyStalk.logger).to receive(:info).at_least :once
+
         beanstalk = EasyStalk::MockBeaneater.new
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
+
         expect(Beaneater).to receive(:new).and_return beanstalk
-        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least :once
         expect(tubes).to receive(:watch!).with("job_tube")
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new(
+          "{}",
+          nil,
+          nil,
+          nil,
+          job_instance.class.tube_name
+        )
+
+        count = 0
         expect(tubes).to receive(:reserve) {
-          @count ||= 0
-          if @count < 2
-            @count = @count + 1
+          if count < 2
+            count += 1
           else
             subject.send :cleanup
           end
           sample_job
         }.exactly(3).times
+
         expect { subject.work([]) }.to_not raise_error
       end
 
       specify "raising exception will trigger a failure" do
-        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        expect(EasyStalk.logger).to receive(:info).at_least :once
+
         beanstalk = EasyStalk::MockBeaneater.new
         mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
+
         expect(EzPool).to receive(:new).and_return mocked_client
-        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least :once
+
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new(
+          "{}",
+          nil,
+          nil,
+          nil,
+          job_instance.class.tube_name
+        )
+
+        count = 0
         expect(tubes).to receive(:reserve) {
-          @count ||= 0
-          if @count < 2
-            @count = @count + 1
+          if count < 2
+            count += 1
           else
             subject.send :cleanup
           end
           sample_job
         }.exactly(3).times
-        expect(job_instance.class).to receive(:call!).exactly(3).times { raise "Boom" }
+
+        expect(job_instance.class).to(receive(:call!).exactly(3).times { raise "Boom" })
         expect(EasyStalk.logger).to receive(:error).exactly(6).times
         expect { subject.work(job_instance.class) }.to_not raise_error
       end
 
       specify "raises if on_fail doesn't respond to call" do
-        expect { subject.work(job_instance.class, on_fail: "Nop") }.to raise_error ArgumentError, "on_fail handler does not respond to call"
+        expect { subject.work(job_instance.class, on_fail: "Nop") }.to raise_error(
+          ArgumentError,
+          "on_fail handler does not respond to call"
+        )
       end
 
       specify "fail will call on_fail handler if provided" do
-        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        expect(EasyStalk.logger).to receive(:info).at_least :once
+
         beanstalk = EasyStalk::MockBeaneater.new
         mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
+
         expect(EzPool).to receive(:new).and_return mocked_client
-        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least :once
+
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new(
+          "{}",
+          nil,
+          nil,
+          nil,
+          job_instance.class.tube_name
+        )
+
+        count = 0
         expect(tubes).to receive(:reserve) {
-          @count ||= 0
-          if @count < 2
-            @count = @count + 1
+          if count < 2
+            count += 1
           else
             subject.send :cleanup
           end
           sample_job
         }.exactly(3).times
+
         expect(job_instance.class).to receive(:call!).exactly(3).times { raise "Boom" }
         expect(EasyStalk.logger).to receive(:error).exactly(0).times
         expect(EasyStalk.logger).to receive(:warn).exactly(3).times
+
         fail_proc = Proc.new { |job, ex| EasyStalk.logger.warn "warn!" }
         expect { subject.work(job_instance.class, on_fail: fail_proc) }.to_not raise_error
       end
@@ -185,10 +267,10 @@ describe EasyStalk::Worker do
     context "with no job class" do
       before do
         class ValidJob < EasyStalk::Job
-          def call
-          end
+          def call; end
         end
       end
+
       after do
         Object.send(:remove_const, :ValidJob)
       end
@@ -197,23 +279,34 @@ describe EasyStalk::Worker do
 
       specify do
         expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
-        expect(EasyStalk.logger).to receive(:info).at_least(1).times
+        expect(EasyStalk.logger).to receive(:info).at_least :once
+
         beanstalk = EasyStalk::MockBeaneater.new
         mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
+
         expect(EzPool).to receive(:new).and_return mocked_client
-        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
-        sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least :once
+
+        sample_job = EasyStalk::MockBeaneater::TubeItem.new(
+          "{}",
+          nil,
+          nil,
+          nil,
+          job_instance.class.tube_name
+        )
+
+        count = 0
         expect(tubes).to receive(:reserve) {
-          @count ||= 0
-          if @count < 2
-            @count = @count + 1
+          if count < 2
+            count += 1
           else
             subject.send :cleanup
           end
           sample_job
         }.exactly(3).times
+
         expect { subject.work }.to_not raise_error
       end
     end
@@ -227,32 +320,46 @@ describe EasyStalk::Worker do
           end
         end
       end
+
       after do
         Object.send(:remove_const, :ValidJob)
       end
 
       specify "buries the job after retry_times attempts" do
         expect(EasyStalk::Job).to receive(:descendants).and_return([ValidJob]).once
-        expect(EasyStalk.logger).to receive(:info).at_least(2).times {}
+        expect(EasyStalk.logger).to(receive(:info).at_least(:twice) {})
+
         EasyStalk.configuration.default_worker_on_fail = Proc.new {}
         beanstalk = EasyStalk::MockBeaneater.new
         mocked_client = EzPool.new(size: 2, timeout: 30) { beanstalk }
         tubes = EasyStalk::MockBeaneater::Tubes.new
         tubes.watch!(ValidJob)
+
         expect(EzPool).to receive(:new).and_return mocked_client
-        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+        expect(beanstalk).to receive(:tubes).and_return(tubes).at_least :once
+
+        count = 0
         expect(tubes).to receive(:reserve) {
-          @count = (@count || 0) + 1
-          if @count > 3
+          count += 1
+          if count > 3
             # all done. simulate empty queue
             subject.send :cleanup
             nil
           else
-            job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, ValidJob.tube_name, @count)
-            expect(job).to receive(:bury) if @count == 2
+            job = EasyStalk::MockBeaneater::TubeItem.new(
+              "{}",
+              nil,
+              nil,
+              nil,
+              ValidJob.tube_name,
+              count
+            )
+
+            expect(job).to receive(:bury) if count == 2
             job
           end
         }.exactly(4).times
+
         expect { subject.work }.to_not raise_error
       end
     end
