@@ -206,6 +206,45 @@ describe EasyStalk::Configuration do
     end
   end
 
+  describe "#worker_rate_controller" do
+    specify "gets default if not provided" do
+      expect(subject.worker_rate_controller).to be_nil
+    end
+  end
+  describe "#worker_rate_controller=" do
+    before do
+      class TestRateController
+        def self.poll
+        end
+        def self.do_work?
+        end
+      end
+
+      class NotARateController
+      end
+    end
+
+    specify "only accepts class that responds to `poll` and `do_work?`" do
+      subject.worker_rate_controller = TestRateController
+      expect(subject.worker_rate_controller).to eq TestRateController
+
+      expect(subject.logger).to receive(:warn).with("Invalid worker_rate_controller NotARateController. Using none.")
+      subject.worker_rate_controller = NotARateController
+      expect(subject.worker_rate_controller).to be_nil
+
+      # log nothing if we are setting it to nil, since that's also a valid value
+      subject.worker_rate_controller = nil
+      expect(subject.worker_rate_controller).to be_nil
+
+      expect(subject.logger).to receive(:warn).with("Invalid worker_rate_controller -5. Using none.")
+      subject.worker_rate_controller = -5
+      expect(subject.worker_rate_controller).to be_nil
+
+      expect(subject.logger).to receive(:warn).with("Invalid worker_rate_controller non numeric string. Using none.")
+      subject.worker_rate_controller = "non numeric string"
+      expect(subject.worker_rate_controller).to be_nil
+    end
+  end
 end
 =begin
 
