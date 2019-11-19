@@ -1,0 +1,31 @@
+inherit_from: .rubocop_todo.yml
+
+Style/Documentation:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/ParameterLists:
+  Enabled: false
+
+Metrics/LineLength:
+  Max: 100
+
+Style/ClassAndModuleChildren:
+  EnforcedStyle: compact
+
+Metrics/BlockLength:
+  Enabled: false
+
+Lint/EmptyWhen:
+  Enabled: false

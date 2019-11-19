@@ -1,9 +1,7 @@
 class EasyStalk::Job
   AlreadyFinished = Class.new(StandardError)
 
-  def self.encode(body)
-    raise ArgumentError, "body must be a Hash, not #{body.class}" unless body.respond_to?(:to_h)
-
+  def self.encode(**body)
     JSON.dump(body)
   end
 

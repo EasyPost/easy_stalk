@@ -1,64 +1,50 @@
-require 'beaneater'
-require 'ezpool'
-require_relative 'job'
-
-module EasyStalk
-  class Client
-    def self.instance
-      @pool ||= create_pool
+class EasyStalk::Client
+  class << self
+    def default
+      @default ||= new(EasyStalk::ProducerPool.default, EasyStalk::ConsumerPool.default)
     end
 
-    def self.enqueue(
-      job,
-      priority: nil,
-      time_to_run: nil,
-      delay: nil,
-      delay_until: nil,
-      tube_name: nil,
-      **kwargs
-    )
-      instance.with do |conn|
-        unless job.class < EasyStalk::Job
-          raise ArgumentError, "Unable to enqueue non-EasyStalk Job"
-        end
+    attr_writer :default
+  end
 
-        job.enqueue(
-          conn,
-          priority: priority,
-          time_to_run: time_to_run,
-          delay: delay,
-          delay_until: delay_until,
-          tube_name: tube_name
-        )
-      end
+  TubeEmpty = Class.new(StandardError)
+
+  attr_reader :consumer
+  attr_reader :producer
+
+  def initialize(producer: EasyStalk::ProducerPool.default,
+                 consumer: EasyStalk::ConsumerPool.default)
+    @producer = producer
+    @consumer = consumer
+  end
+
+  def push(data, priority:, tube:, delay:, time_to_run:)
+    producer_pool.with do |connection|
+      connection
+        .tubes
+        .fetch(EasyStalk.tube_name(tube))
+        .put(EasyStalk::Job.encode(data), pri: priority, ttr: time_to_run, delay: [delay, 0].max)
     end
+  end
 
-    def self.create_worker_pool(tubes, config=EasyStalk.configuration)
-      raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
-      conns = config.beanstalkd_urls.shuffle
-      i = 0
-      # workers should only ever run a single thread to talk to beanstalk;
-      # set the pool size to "1" and the timeout low to ensure that we don't
-      # ever violate that
-      instance = EzPool.new(size: 1, timeout: 1, max_age: config.worker_reconnect_seconds, disconnect_with: lambda{ |client| client.close }) do
-        # rotate through the connections fairly
-        client = Beaneater.new(conns[i])
-        i = (i + 1) % conns.length
-        client.tubes.watch!(*tubes)
-        EasyStalk.logger.info "Watching tubes #{tubes} for jobs"
-        client
-      end
-      instance
+  def pop
+    # This Timeout block is to catch the case where the beanstalkd
+    # may zone out and forget to reserve a job for us. We intentionally
+    # don't catch Timeout::Error; if that fires, then beanstalkd is
+    # messed up, and our best bet is probably to exit noisily
+
+    consumer_pool.with do |connection|
+      job = Timeout.timeout(reserve_timeout * 4) { connection.tubes.reserve(reserve_timeout) }
+      raise TubeEmpty unless job
+
+      yield EasyStalk::Job.new(job)
     end
-
-    def self.create_pool(config = EasyStalk.configuration)
-      raise "beanstalkd_urls not specified in config" unless config.beanstalkd_urls
-      instance = EzPool.new(size: config.pool_size, timeout: config.timeout_seconds) do
-        Beaneater.new(config.beanstalkd_urls.sample)
-      end
-      instance
+  rescue TubeEmpty
+    retry
+  rescue Beaneater::TimedOutError
+    # Failed to reserve a job, tube is likely empty
+    EasyStalk.logger.debug do
+      "#{connection} failed to reserve jobs within #{reserve_timeout} seconds"
     end
-
-    private_class_method :create_pool
   end
 end
