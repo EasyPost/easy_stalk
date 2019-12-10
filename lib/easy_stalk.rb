@@ -1,4 +1,6 @@
 require 'logger'
+require 'interactor'
+require 'descendants_tracker'
 
 module EasyStalk
   VERSION = '0.1.3'

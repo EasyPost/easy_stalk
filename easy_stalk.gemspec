@@ -25,6 +25,6 @@ Gem::Specification.new do |s|
   s.homepage    = 'https://github.com/EasyPost/easy_stalk'
   s.license     = 'MIT'
 
-  s.add_development_dependency "bundler", "~> 1.12"
+  s.add_development_dependency "bundler", "~> 2.0"
   s.add_development_dependency "rspec", "~> 3.0"
 end

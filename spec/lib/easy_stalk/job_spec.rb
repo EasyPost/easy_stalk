@@ -1,231 +1,212 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
-require 'date'
-
-
 describe EasyStalk::Job do
-
-  class EasyStalk::MockJob < EasyStalk::Job
+  subject(:job) do
+    Class.new(EasyStalk::Job) do
+      def self.name
+        'MockJob'
+      end
+    end
   end
 
-  after(:all) do
-    EasyStalk.send(:remove_const, :MockJob)
-  end
+  describe '.tube_name' do
+    subject(:tube_name) { job.tube_name }
 
-  describe EasyStalk::MockJob do
-    after do
-      EasyStalk.configure
-    end
+    context 'with a default prefix' do
+      before { EasyStalk.configure { |config| config.default_tube_prefix = 'prefix.' } }
 
-    describe 'self << class' do
-      subject { described_class }
+      it { is_expected.to eq('prefix.MockJob') }
 
-      describe '.tube_name' do
-        it 'defaults to class name' do
-          EasyStalk.configure { |config| config.default_tube_prefix = "rating.test." }
-          expect(subject.tube_name).to eq "rating.test.MockJob"
-        end
-        it 'can be set manually' do
-          class MockJobWithName < subject
-            tube_name "bar"
-          end
-          EasyStalk.configure { |config| config.default_tube_prefix = "rating.test." }
-          expect(MockJobWithName.new.class.tube_name).to eq "rating.test.bar"
-          Object.send(:remove_const, :MockJobWithName)
-        end
-        it 'properly uses a prefix' do
-          class MockJobWithNameAndPrefix < subject
-            tube_name "bar"
-            tube_prefix "foo."
-          end
-          expect(MockJobWithNameAndPrefix.new.class.tube_name).to eq "foo.bar"
-          Object.send(:remove_const, :MockJobWithNameAndPrefix)
-        end
-      end
+      context 'and custom tube_name' do
+        before { job.tube_name 'bar' }
 
-      describe '.tube_prefix' do
-        it 'can be set manually' do
-          class MockJobWithPrefix < subject
-            tube_prefix "bar."
-          end
-          expect(MockJobWithPrefix.new().class.tube_prefix).to eq "bar."
-          Object.send(:remove_const, :MockJobWithPrefix)
-        end
-        it 'uses the env if present' do
-          EasyStalk.configure { |config| config.default_tube_prefix = "foo." }
-          expect(subject.tube_prefix).to eq "foo."
-        end
-        it 'uses blank if no env' do
-          expect(subject.tube_prefix).to eq ""
-        end
-      end
-
-      describe '.priority' do
-        it 'can be set manually' do
-          class MockJobWithPri < subject
-            priority 25
-          end
-          expect(MockJobWithPri.new().class.priority).to eq 25
-          Object.send(:remove_const, :MockJobWithPri)
-        end
-        it 'uses default if not set' do
-          expect(subject.priority).to eq EasyStalk::Configuration::DEFAULT_PRI
-        end
-      end
-
-      describe '.time_to_run' do
-        it 'can be set manually' do
-          class MockJobWithTtr < subject
-            time_to_run 90
-          end
-          expect(MockJobWithTtr.new().class.time_to_run).to eq 90
-          Object.send(:remove_const, :MockJobWithTtr)
-        end
-        it 'uses default if not set' do
-          expect(subject.time_to_run).to eq EasyStalk::Configuration::DEFAULT_TTR
-        end
-      end
-
-      describe '.delay' do
-        it 'can be set manually' do
-          class MockJobWithDelay < subject
-            delay 5
-          end
-          expect(MockJobWithDelay.new().class.delay).to eq 5
-          Object.send(:remove_const, :MockJobWithDelay)
-        end
-        it 'uses default if not set' do
-          expect(subject.delay).to eq EasyStalk::Configuration::DEFAULT_DELAY
-        end
-      end
-
-      describe '.retry_times' do
-        it 'can be set manually' do
-          class MockJobWithRetryTimes < subject
-            retry_times 5
-          end
-          expect(MockJobWithRetryTimes.new().class.retry_times).to eq 5
-          Object.send(:remove_const, :MockJobWithRetryTimes)
-        end
-        it 'uses default if not set' do
-          expect(subject.retry_times).to eq EasyStalk::Configuration::DEFAULT_RETRY_TIMES
-        end
-      end
-
-      describe '.serializable_context_keys' do
-        it 'can be set manually' do
-          class MockJobWithKeys < subject
-            serializable_context_keys :cat, :dog
-          end
-          expect(MockJobWithKeys.new().class.serializable_context_keys).to eq [:cat, :dog]
-          Object.send(:remove_const, :MockJobWithKeys)
-        end
-        it 'uses default if not set' do
-          expect(subject.serializable_context_keys).to eq described_class::DEFAULT_SERIALIZABLE_CONTEXT_KEYS
-        end
+        it { is_expected.to eq('prefix.bar') }
       end
     end
 
-    describe '.enqueue' do
-
-      it 'properly enquques with defaults' do
-        EasyStalk.configure { |config| config.default_tube_prefix = "rating.test." }
-        conn = double
-        tube = double
-        job_data = "{}"
-        pri = EasyStalk::Configuration::DEFAULT_PRI
-        ttr = EasyStalk::Configuration::DEFAULT_TTR
-        delay = EasyStalk::Configuration::DEFAULT_DELAY
-        expect(conn).to receive(:tubes) { {"rating.test.MockJob" => tube } }
-        expect(tube).to receive(:put).with(job_data, pri: pri, ttr: ttr, delay: delay) { {:status=>"INSERTED", :id=>"1234"} }
-        subject.enqueue(conn)
-      end
-      it 'allows overriding pri, ttr and delay' do
-        conn = double
-        tube = double
-        job_data = "{}"
-        pri = 10
-        ttr = 30
-        delay = 1
-        expect(conn).to receive(:tubes) { {"MockJob" => tube } }
-        expect(tube).to receive(:put).with(job_data, pri: pri, ttr: ttr, delay: delay) { {:status=>"INSERTED", :id=>"1234"} }
-        subject.enqueue(conn, priority: pri, time_to_run: ttr, delay: delay)
-      end
-      it 'properly uses delay_until over delay' do
-        conn = double
-        tube = double
-        now = DateTime.now
-        delay_until = now + 3
-        expect(DateTime).to receive(:now).and_return(now)
-        expect(conn).to receive(:tubes) { {"MockJob" => tube } }
-        expect(tube).to receive(:put).with("{}", pri: 1, ttr: 1, delay: 3 * 24*60*60) { {:status=>"INSERTED", :id=>"1234"} }
-        subject.enqueue(conn, priority: 1, time_to_run: 1, delay: 24*60*60, delay_until: delay_until)
-      end
-      it 'does not allow a delay less than 0' do
-        conn = double
-        tube = double
-        expect(conn).to receive(:tubes) { {"MockJob" => tube } }
-        expect(tube).to receive(:put).with("{}", pri: 1, ttr: 1, delay: 0) { {:status=>"INSERTED", :id=>"1234"} }
-        subject.enqueue(conn, priority: 1, time_to_run: 1, delay: -10)
-      end
-      it 'only enqueues serializable_context_keys' do
-        class MockJobWithKeys < described_class
-          serializable_context_keys :cat, :dog
-        end
-        conn = double
-        tube = double
-        job_data = "{\"cat\":\"mew\",\"dog\":\"wuf\"}"
-        pri = 10
-        ttr = 30
-        delay = 1
-        expect(conn).to receive(:tubes) { {"MockJobWithKeys" => tube } }
-        expect(tube).to receive(:put).with(job_data, pri: pri, ttr: ttr, delay: delay) {
-          {:status=>"INSERTED", :id=>"1234"}
-        }
-        MockJobWithKeys.new(:cat => "mew", "dog" => "wuf", :fish => "blu").
-          enqueue(conn, priority: pri, time_to_run: ttr, delay: delay)
-        Object.send(:remove_const, :MockJobWithKeys)
-      end
-    end
-
-    describe '.enqueue' do
-      context 'when ImmediateJobRunner is active' do
-        before do
-          EasyStalk::Extensions::ImmediateJobRunner.activate!
-        end
-
-        it 'raises NotImplementedError' do
-          expect { described_class.call }.to raise_error(NotImplementedError)
-        end
-
-        after do
-          EasyStalk::Extensions::ImmediateJobRunner.deactivate!
-        end
-      end
-    end
-
-    describe '.job_data' do
-      it 'only_uses_serlizable_keys' do
-        class MockJobWithKeys < described_class
-          serializable_context_keys :cat, :dog
-        end
-        context = { :cat => "mew", "dog" => "wuf", :fish => "blu" }
-        expect(MockJobWithKeys.new(context).job_data).to eq "{\"cat\":\"mew\",\"dog\":\"wuf\"}"
-        Object.send(:remove_const, :MockJobWithKeys)
-      end
-    end
-
-    describe '.call' do
+    context 'with a custom prefix and tube_name' do
       before do
-        class ImplementedJob < described_class
-          def call; end
+        job.tube_name 'bar'
+        job.tube_prefix 'foo.'
+      end
+
+      it { is_expected.to eq('foo.bar') }
+    end
+  end
+
+  describe '.tube_prefix' do
+    subject(:tube_prefix) { job.tube_prefix }
+
+    before { EasyStalk.configure  }
+
+    it { is_expected.to eq(EasyStalk::Configuration::DEFAULT_TUBE_PREFIX) }
+
+    context 'with a custom prefix' do
+      before { EasyStalk.configure { |config| config.default_tube_prefix = 'prefix.' } }
+
+      it { is_expected.to eq('prefix.') }
+    end
+  end
+
+  describe '.priority' do
+    subject(:priority) { job.priority }
+
+    it { is_expected.to eq(EasyStalk::Configuration::DEFAULT_PRI) }
+
+    context 'with a custom priority' do
+      before { EasyStalk.configure { |config| config.default_priority = 25 } }
+
+      it { is_expected.to eq(25) }
+    end
+  end
+
+  describe '.time_to_run' do
+    subject(:time_to_run) { job.time_to_run }
+
+    it { is_expected.to eq(EasyStalk::Configuration::DEFAULT_TTR) }
+
+    context 'with a custom time_to_run' do
+      before { EasyStalk.configure { |config| config.default_time_to_run = 90 } }
+
+      it { is_expected.to eq(90) }
+    end
+  end
+
+  describe '.delay' do
+    subject(:delay) { job.delay }
+
+    it { is_expected.to eq(EasyStalk::Configuration::DEFAULT_DELAY) }
+
+    context 'with a custom delay' do
+      before { EasyStalk.configure { |config| config.default_delay = 5 } }
+
+      it { is_expected.to eq(5) }
+    end
+  end
+
+  describe '.retry_times' do
+    subject(:retry_times) { job.retry_times }
+
+    it { is_expected.to eq(EasyStalk::Configuration::DEFAULT_RETRY_TIMES) }
+
+    context 'with a custom retry_times' do
+      before { EasyStalk.configure { |config| config.default_retry_times = 5 } }
+
+      it { is_expected.to eq(5) }
+    end
+  end
+
+  describe '.serializable_context_keys' do
+    subject(:serializable_context_keys) { job.serializable_context_keys }
+
+    it { is_expected.to be_empty }
+
+    context 'with custom context keys' do
+      before { job.serializable_context_keys :foo, :bar }
+
+      it { is_expected.to contain_exactly(:foo, :bar) }
+
+      context 'when subclassed' do
+        let(:subclass) { Class.new(job) }
+
+        subject(:serializable_context_keys) { subclass.serializable_context_keys }
+
+        it { is_expected.to contain_exactly(:foo, :bar) }
+
+        context 'with custom context keys' do
+          before { subclass.serializable_context_keys :baz }
+
+          it { is_expected.to contain_exactly(:foo, :bar, :baz) }
         end
       end
-      after do
-        Object.send(:remove_const, :ImplementedJob)
+    end
+  end
+
+  describe '#enqueue' do
+    subject(:enqueue) { instance.enqueue(connection, **options) }
+
+    let(:connection) { spy(Beaneater::Connection, tubes: tubes) }
+    let(:tube) { spy(Beaneater::Tube) }
+    let(:tubes) { { job.tube_name => tube } }
+    let(:options) { {} }
+    let(:instance) { job.new }
+
+    specify do
+      enqueue
+
+      expect(tube).to have_received(:put)
+        .with(instance.job_data, pri: job.priority, ttr: job.time_to_run, delay: job.delay)
+    end
+
+    context 'with custom priority, time_to_run, delay' do
+      before { options.merge!(priority: 10, time_to_run: 30, delay: 1) }
+
+      specify do
+        enqueue
+
+        expect(tube).to have_received(:put).with(instance.job_data, pri: 10, ttr: 30, delay: 1)
       end
-      it { expect { described_class.call }.to raise_error(NotImplementedError) }
-      it { expect { ImplementedJob.call }.to_not raise_error }
+    end
+
+    context 'with delay_until' do
+      before do
+        options.merge!(delay_until: now + 3)
+        allow(Time).to receive(:now).and_return(now)
+      end
+
+      let(:now) { Time.now }
+
+      specify do
+        enqueue
+
+        expect(tube).to have_received(:put).with(instance.job_data,
+                                                 pri: job.priority,
+                                                 ttr: job.time_to_run,
+                                                 delay: 3 * 24 * 60 * 60)
+      end
+    end
+
+    context 'with a negative delay' do
+      before { options.merge!(delay: -10) }
+
+      specify do
+        enqueue
+
+        expect(tube).to have_received(:put).with(instance.job_data,
+                                                 pri: job.priority,
+                                                 ttr: job.time_to_run,
+                                                 delay: 0)
+      end
+    end
+
+    context 'with non-serializable context keys' do
+      before { job.serializable_context_keys :foo, :bar }
+
+      let(:instance) { job.new(foo: 1, bar: 2, baz: 3) }
+
+      specify do
+        enqueue
+
+        expect(tube).to have_received(:put).with(JSON.dump(foo: 1, bar: 2),
+                                                 pri: job.priority,
+                                                 ttr: job.time_to_run,
+                                                 delay: job.delay)
+      end
+    end
+  end
+
+  describe '#call' do
+    subject(:call) { job.new.call }
+
+    it { expect { call }.to raise_error(NotImplementedError) }
+
+    context 'when ImmediateJobRunner is active' do
+      before { EasyStalk::Extensions::ImmediateJobRunner.activate! }
+      after { EasyStalk::Extensions::ImmediateJobRunner.deactivate! }
+
+      specify { expect { described_class.call }.to raise_error(NotImplementedError) }
     end
   end
 end

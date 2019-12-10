@@ -1,16 +1,18 @@
-require 'interactor'
-require 'descendants_tracker'
+# frozen_string_literal: true
 
 module EasyStalk
   class Job
     extend DescendantsTracker
     include Interactor
 
-
     SECONDS_IN_DAY = 24 * 60 * 60
-    DEFAULT_SERIALIZABLE_CONTEXT_KEYS = []
 
-    def self.tube_name(tube=nil)
+    def self.inherited(klass)
+      super
+      klass.serializable_context_keys = serializable_context_keys || []
+    end
+
+    def self.tube_name(tube = nil)
       if tube
         @tube_name = tube
       else
@@ -18,7 +20,7 @@ module EasyStalk
       end
     end
 
-    def self.tube_prefix(prefix=nil)
+    def self.tube_prefix(prefix = nil)
       if prefix
         @tube_prefix = prefix
       else
@@ -26,7 +28,7 @@ module EasyStalk
       end
     end
 
-    def self.priority(pri=nil)
+    def self.priority(pri = nil)
       # integer < 2**32. 0 is highest
       if pri
         @priority = pri
@@ -35,7 +37,7 @@ module EasyStalk
       end
     end
 
-    def self.time_to_run(seconds=nil)
+    def self.time_to_run(seconds = nil)
       # integer seconds to run this job
       if seconds
         @time_to_run = seconds
@@ -44,7 +46,7 @@ module EasyStalk
       end
     end
 
-    def self.delay(seconds=nil)
+    def self.delay(seconds = nil)
       # integer seconds before job is in ready queue
       if seconds
         @delay = seconds
@@ -53,7 +55,7 @@ module EasyStalk
       end
     end
 
-    def self.retry_times(attempts=nil)
+    def self.retry_times(attempts = nil)
       # max number of times to retry job before burying
       if attempts
         @retry_times = attempts
@@ -62,12 +64,16 @@ module EasyStalk
       end
     end
 
-    def self.serializable_context_keys(*keys)
-      if keys.size > 0
-        @serializable_context_keys = keys
-      else
-        @serializable_context_keys || DEFAULT_SERIALIZABLE_CONTEXT_KEYS
+    class << self
+      def serializable_context_keys(*keys)
+        @serializable_context_keys ||= [] if keys.empty?
+
+        @serializable_context_keys |= keys
       end
+
+      protected
+
+      attr_writer :serializable_context_keys
     end
 
     def enqueue(
@@ -81,10 +87,10 @@ module EasyStalk
       tube = beanstalk_connection.tubes[tube_name || self.class.tube_name]
       pri = priority || self.class.priority
       ttr = time_to_run || self.class.time_to_run
-      delay = delay || self.class.delay
+      delay ||= self.class.delay
 
-      if delay_until && DateTime === delay_until
-        days = delay_until - DateTime.now
+      if delay_until && Time === delay_until
+        days = delay_until - Time.now
         delay = (days * SECONDS_IN_DAY).to_i
       end
 
@@ -92,7 +98,7 @@ module EasyStalk
     end
 
     def job_data
-      data = context.to_h.select { |key, value| self.class.serializable_context_keys.include? key }
+      data = context.to_h.select { |key, _value| self.class.serializable_context_keys.include? key }
       JSON.dump(data)
     end
 
@@ -101,4 +107,3 @@ module EasyStalk
     end
   end
 end
-
