@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'json'
 require 'logger'
 require 'timeout'
@@ -40,7 +42,11 @@ module EasyStalk
     end
 
     def method_missing(method, *args, &block)
-      configuration.send(method, *args, &block)
+      if configuration.respond_to?(method)
+        configuration.public_send(method, *args, &block)
+      else
+        super
+      end
     end
   end
 end

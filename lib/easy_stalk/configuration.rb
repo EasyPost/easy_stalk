@@ -83,7 +83,7 @@ class EasyStalk::Configuration
 
   def nonzero_integer!(numeric)
     integer = Integer(numeric)
-    raise ArgumentError, "#{integer} is not greater than 0" unless integer > 0
+    raise ArgumentError, "#{integer} is not greater than 0" unless integer.positive?
 
     integer
   end

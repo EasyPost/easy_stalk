@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EasyStalk::ProducerPool
   def self.default
     @default ||= create
