@@ -4,9 +4,10 @@ class EasyStalk::Dispatcher
   attr_reader :shutdown
 
   def self.dispatch(client: EasyStalk::Client.default, reserve_timeout: 3)
-    worker = new(tubes, reserve_timeout: reserve_timeout, client: client)
-    worker.register_signal_handlers
-    worker.start
+    new(tubes, reserve_timeout: reserve_timeout, client: client).tap do |worker|
+      worker.register_signal_handlers
+      worker.start
+    end
   end
 
   def initialize(reserve_timeout:, client:)
@@ -31,7 +32,9 @@ class EasyStalk::Dispatcher
 
     until shutdown
       client.pop(timeout: reserve_timeout) do |job|
-        EasyStalk.consumers.fetch(job.tube).dispatch(job)
+        EasyStalk.tube_consumers.fetch(job.tube).consume(
+          EasyStalk::Job.new(job, client: client)
+        )
       end
     end
 

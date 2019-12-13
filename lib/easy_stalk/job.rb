@@ -9,8 +9,11 @@ class EasyStalk::Job
     JSON.dump(body)
   end
 
-  def initialize(job)
+  attr_reader :client
+
+  def initialize(job, client: EasyStalk::Client.default)
     @job = job
+    @client = client
     @finished = false
     @buried = false
   end
@@ -27,18 +30,18 @@ class EasyStalk::Job
       seconds_to_delay = minutes_to_delay * 60
       randomizer = rand(0..seconds_to_delay / 3)
 
-      job.release delay: seconds_to_delay + randomizer
+      client.release(job, delay: seconds_to_delay + randomizer)
     end
   end
   alias delayed_retry delayed_release
 
   def releases
-    job.stats.releases
+    client.releases(job)
   end
   alias retries releases
 
   def bury
-    finish { job.bury }
+    finish { client.bury(job) }
     self.buried = true
   end
   alias dead bury
@@ -52,6 +55,7 @@ class EasyStalk::Job
 
   private
 
+  attr_reader :job
   attr_writer :finished
   attr_writer :buried
 

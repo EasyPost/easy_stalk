@@ -59,7 +59,7 @@ class EasyStalk::Consumer
     end
 
     def serialize(data)
-      data
+      EasyStalk::MethodDelegator.serialize(data, specification: method(:call))
     end
 
     def consume(job)
@@ -80,7 +80,7 @@ class EasyStalk::Consumer
   end
 
   def consume
-    call
+    EasyStalk::MethodDelegator.delegate(job.body, to: method(:call))
   end
 
   def call(**)

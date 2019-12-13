@@ -49,4 +49,16 @@ class EasyStalk::Client
       "#{connection} failed to reserve jobs within #{reserve_timeout} seconds"
     end
   end
+
+  def releases(job)
+    job.stats.release
+  end
+
+  def release(job, delay:)
+    job.release delay: delay
+  end
+
+  def bury(job)
+    job.dead
+  end
 end

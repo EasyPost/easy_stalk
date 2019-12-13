@@ -53,4 +53,5 @@ end
 
 require_relative 'easy_stalk/configuration'
 require_relative 'easy_stalk/consumer'
+require_relative 'easy_stalk/method_delegator'
 require_relative 'easy_stalk/job'
