@@ -33,16 +33,26 @@ RSpec.describe EasyStalk::Dispatcher do
     specify { expect(run).to eq(nil) }
 
     context 'with a job' do
-      before { client.push({}, tube: 'foo') }
+      let!(:job) { client.push({}, tube: 'foo') }
 
       context 'with no consumer' do
         specify { expect { run }.to raise_error(KeyError) }
       end
 
       context 'with a consumer' do
-        let!(:consumer) { Class.new(EasyStalk::Consumer) { assign 'foo' } }
+        let!(:consumer) do
+          Class.new(EasyStalk::Consumer) do
+            assign 'foo'
 
-        specify { expect { run }.to change(client, :jobs).to([]) }
+            def call; end
+          end
+        end
+
+        specify do
+          expect { run }.to change(client, :ready)
+            .to([])
+            .and change(client, :completed).to([job])
+        end
       end
     end
   end

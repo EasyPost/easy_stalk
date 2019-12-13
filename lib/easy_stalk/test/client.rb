@@ -1,22 +1,36 @@
 # frozen_string_literal: true
 
 class EasyStalk::Test::Client
-  Job = Struct.new(:body, :priority, :tube, :delay, :time_to_run, :releases, :buried)
+  Job = Struct.new(:body, :priority, :tube, :time_to_run, :delay, :releases)
 
-  attr_reader :jobs
+  attr_reader :buried
+  attr_reader :reserved
+  attr_reader :completed
+  attr_reader :delayed
+  attr_reader :ready
 
-  def initialize(jobs: [])
-    @jobs = jobs
+  def initialize(ready: [], delayed: {}, buried: [], completed: [], reserved: [])
+    @ready = ready
+    @delayed = delayed
+    @buried = buried
+    @completed = completed
+    @reserved = reserved
   end
 
   def push(data, tube:, priority: EasyStalk.default_job_priority,
            delay: EasyStalk.default_job_delay, time_to_run: EasyStalk.default_job_time_to_run)
-    jobs << Job.new(JSON.parse(JSON.dump(data)), priority, tube, delay, time_to_run, 0)
+    Job.new(
+      EasyStalk::Job.encode(data), priority, tube, time_to_run, delay, 0
+    ).tap do |job|
+      ready << job
+    end
   end
 
-  def pop(timeout:)
-    next_job = jobs.shift
+  def pop(timeout:) # rubocop:disable Lint/UnusedMethodArgument
+    next_job = ready.shift
     return unless next_job
+
+    reserved << next_job
 
     yield next_job
   end
@@ -27,10 +41,20 @@ class EasyStalk::Test::Client
 
   def release(job, delay:)
     job.releases += 1
-    job.delay = delay
+    delayed[job] = delay
+
+    reserved.delete(job)
   end
 
   def bury(job)
-    job.buried = true
+    buried << job
+
+    reserved.delete(job)
+  end
+
+  def complete(job)
+    completed << job
+
+    reserved.delete(job)
   end
 end

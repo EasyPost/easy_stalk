@@ -4,9 +4,9 @@ class EasyStalk::Job
   AlreadyFinished = Class.new(StandardError)
 
   def self.encode(body)
-    raise ArgumentError, "body must be a Hash, not #{body.class}" unless body.respond_to?(:to_h)
+    raise TypeError, "cannot serialize #{body.class} to a Hash" unless body.respond_to?(:to_h)
 
-    JSON.dump(body)
+    JSON.dump(body.to_h)
   end
 
   attr_reader :client
@@ -24,13 +24,12 @@ class EasyStalk::Job
 
   def delayed_release
     finish do
-      # Compute a cubed backoff with a randomizer, skipping the first gen
-      # [4,13,40,121,364,,,] mins + up to 1/3 of the time (randomly)
-      minutes_to_delay = ((3**(releases+ 1)) / 2)
-      seconds_to_delay = minutes_to_delay * 60
-      randomizer = rand(0..seconds_to_delay / 3)
+      backoff = ((3**(releases + 1)) / 2) * 60
+      jitter = rand(0..backoff / 3)
 
-      client.release(job, delay: seconds_to_delay + randomizer)
+      delay = backoff + jitter
+
+      client.release(job, delay: delay)
     end
   end
   alias delayed_retry delayed_release
@@ -47,7 +46,7 @@ class EasyStalk::Job
   alias dead bury
 
   def complete
-    finish { job.delete }
+    finish { client.complete(job) }
   end
 
   attr_reader :finished

@@ -5,8 +5,6 @@ class EasyStalk::Client
     def default
       @default ||= new(EasyStalk::ProducerPool.default, EasyStalk::ConsumerPool.default)
     end
-
-    attr_writer :default
   end
 
   TubeEmpty = Class.new(StandardError)
@@ -61,5 +59,9 @@ class EasyStalk::Client
 
   def bury(job)
     job.dead
+  end
+
+  def complete(job)
+    job.delete
   end
 end
