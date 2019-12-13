@@ -12,11 +12,11 @@ RSpec.describe EasyStalk::MethodConsumer do
           'consumer'
         end
 
-        def on_error(exception)
-          raise exception
-        end
-
         alias_method :inspect, :to_s
+      end
+
+      def on_error(exception)
+        raise exception
       end
     end
   end
