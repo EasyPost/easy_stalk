@@ -26,7 +26,7 @@ class EasyStalk::Job
     finish do
       # Compute a cubed backoff with a randomizer, skipping the first gen
       # [4,13,40,121,364,,,] mins + up to 1/3 of the time (randomly)
-      minutes_to_delay = ((3**(job.stats.releases + 1)) / 2)
+      minutes_to_delay = ((3**(releases+ 1)) / 2)
       seconds_to_delay = minutes_to_delay * 60
       randomizer = rand(0..seconds_to_delay / 3)
 

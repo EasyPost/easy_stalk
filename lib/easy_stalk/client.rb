@@ -20,7 +20,8 @@ class EasyStalk::Client
     @consumer = consumer
   end
 
-  def push(data, priority:, tube:, delay:, time_to_run:)
+  def push(data, tube:, priority: EasyStalk.default_job_priority,
+           delay: EasyStalk.default_job_delay, time_to_run: EasyStalk.default_job_time_to_run)
     producer_pool.with do |connection|
       connection
         .tubes
@@ -29,14 +30,14 @@ class EasyStalk::Client
     end
   end
 
-  def pop
+  def pop(timeout:)
     # This Timeout block is to catch the case where the beanstalkd
     # may zone out and forget to reserve a job for us. We intentionally
     # don't catch Timeout::Error; if that fires, then beanstalkd is
     # messed up, and our best bet is probably to exit noisily
 
     consumer_pool.with do |connection|
-      job = Timeout.timeout(reserve_timeout * 4) { connection.tubes.reserve(reserve_timeout) }
+      job = Timeout.timeout(timeout * 4) { connection.tubes.reserve(timeout) }
       raise TubeEmpty unless job
 
       yield EasyStalk::Job.new(job)

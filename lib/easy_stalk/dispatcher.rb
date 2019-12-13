@@ -10,6 +10,9 @@ class EasyStalk::Dispatcher
     end
   end
 
+  attr_reader :client
+  attr_reader :reserve_timeout
+
   def initialize(reserve_timeout:, client:)
     @client = client
     @reserve_timeout = reserve_timeout

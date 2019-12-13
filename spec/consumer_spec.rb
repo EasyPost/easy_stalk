@@ -17,8 +17,6 @@ RSpec.describe EasyStalk::Consumer do
     end
   end
 
-  before { EasyStalk.tube_consumers.clear }
-
   describe '.priority' do
     specify do
       expect { consumer.priority = 30 }
