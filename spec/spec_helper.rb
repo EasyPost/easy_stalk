@@ -6,6 +6,10 @@ if ENV.key?('COVERAGE')
 end
 
 require_relative '../lib/easy_stalk'
+require_relative '../lib/easy_stalk/test'
+
+EasyStalk.configure.logger = ENV.key?('DEBUG') ? Logger.new(STDOUT) : Logger.new(nil)
+
 Bundler.require(:test)
 
 RSpec.configure do |config|

@@ -30,15 +30,17 @@ class EasyStalk::Dispatcher
   def start
     EasyStalk.logger.info { "Watching tubes #{tubes.inspect} for jobs" }
 
-    until shutdown
-      client.pop(timeout: reserve_timeout) do |job|
-        EasyStalk.tube_consumers.fetch(job.tube).consume(
-          EasyStalk::Job.new(job, client: client)
-        )
-      end
-    end
+    run until shutdown
 
     EasyStalk.logger.info { "Dispatcher assigned to #{tubes.inspect} has been stopped" }
+  end
+
+  def run
+    client.pop(timeout: reserve_timeout) do |job|
+      EasyStalk.tube_consumers.fetch(job.tube).consume(
+        EasyStalk::Job.new(job, client: client)
+      )
+    end
   end
 
   private

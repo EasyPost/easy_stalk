@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+# stdlib
 require 'json'
 require 'logger'
 require 'timeout'
 
+# deps
 require 'beaneater'
 require 'ezpool'
 
@@ -53,5 +55,6 @@ end
 
 require_relative 'easy_stalk/configuration'
 require_relative 'easy_stalk/consumer'
-require_relative 'easy_stalk/method_delegator'
+require_relative 'easy_stalk/dispatcher'
 require_relative 'easy_stalk/job'
+require_relative 'easy_stalk/method_delegator'
