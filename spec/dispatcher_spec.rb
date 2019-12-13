@@ -10,7 +10,7 @@ RSpec.describe EasyStalk::Dispatcher do
     specify { expect { shutdown! }.to change(dispatcher, :shutdown).from(false).to(true) }
   end
 
-  describe '#start' do
+  describe '#start', :slow do
     subject(:start) { dispatcher.start }
 
     before do
