@@ -1,6 +1,6 @@
 # EasyStalk
 
-[![Build Status](https://travis-ci.org/EasyPost/easy_stalk.svg?branch=master)](https://travis-ci.org/EasyPost/easy_stalk)
+[![Build Status](https://travis-ci.com/EasyPost/easy_stalk.svg?branch=master)](https://travis-ci.com/EasyPost/easy_stalk)
 
 A simple beanstalkd client for ruby
 
