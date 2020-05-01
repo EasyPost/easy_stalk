@@ -31,7 +31,7 @@
 ## 0.0.8 (2017-02-16)
 
  - Change workers to cycle through available connections periodically (based on the new
-   `$BEANSTALKD_WORKER_RECONNECT_SECONDS` parameter) instead of pinning to one
+   `$BEANSTALKD_connection_max_age` parameter) instead of pinning to one
    beanstalkd server until the process is restarted
  - Wrap the `reserve-with-timeout` call in `Timeout` for those weird times when beanstalkd loses
    track of pending workers
