@@ -6,6 +6,8 @@ require "easy_stalk"
 require 'support/mock_beaneater'
 require 'easy_stalk/test'
 
+Bundler.require(:test)
+
 RSpec.configure do |config|
   config.color = true
   config.tty = true
