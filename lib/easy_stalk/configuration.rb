@@ -11,11 +11,13 @@ module EasyStalk
                 :beanstalkd_urls,
                 :pool_size,
                 :timeout_seconds,
-                :worker_reconnect_seconds
+                :worker_reconnect_seconds,
+                :worker_shutdown_after_jobs
 
     DEFAULT_POOL_SIZE = 5
     DEFAULT_TIMEOUT_SECONDS = 10
     DEFAULT_WORKER_RECONNECT_SECONDS = 300
+    DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS = 0..0
 
     DEFAULT_TUBE_PREFIX = ""
     DEFAULT_PRI = 500 # 0 is highest
@@ -43,6 +45,19 @@ module EasyStalk
       self.pool_size = ENV['BEANSTALKD_POOL_SIZE'] || DEFAULT_POOL_SIZE
       self.timeout_seconds = ENV['BEANSTALKD_TIMEOUT_SECONDS'] || DEFAULT_TIMEOUT_SECONDS
       self.worker_reconnect_seconds = ENV['BEANSTALKD_WORKER_RECONNECT_SECONDS'] || DEFAULT_WORKER_RECONNECT_SECONDS
+
+      if ENV['BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS']
+        if /^(\d+)\s*-\s*(\d+)$/.match(ENV['BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS'])
+          self.worker_shutdown_after_jobs = Range.new($1.to_i, $2.to_i)
+        elsif /^(\d+)$/.match(ENV['BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS'])
+          self.worker_shutdown_after_jobs = Range.new($1.to_i, $1.to_i)
+        else
+          logger.warn "Invalid worker_shutdown_after_jobs #{ENV['BEANSTALKD_WORKER_SHUTDOWN_AFTER_JOBS']}. Using default."
+          self.worker_shutdown_after_jobs = DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
+        end
+      else
+        self.worker_shutdown_after_jobs = DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
+      end
     end
 
     def default_tube_prefix=(tube_prefix)
@@ -123,5 +138,15 @@ module EasyStalk
       end
     end
 
+    def worker_shutdown_after_jobs=(jobs)
+      if jobs.is_a? Range
+        @worker_shutdown_after_jobs = jobs
+      elsif jobs.respond_to?(:to_i)
+        @worker_shutdown_after_jobs = Range.new(jobs.to_i, jobs.to_i)
+      else
+        logger.warn "Invalid worker_shutdown_after_jobs #{jobs}. Using default."
+        @worker_shutdown_after_jobs = DEFAULT_WORKER_SHUTDOWN_AFTER_JOBS
+      end
+    end
   end
 end
