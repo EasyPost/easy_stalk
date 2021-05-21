@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 (2019-11-12)
+
+ - Added EasyStalk::Configuration.worker_rate_controller, which can hook into any class which responds to `poll` and `do_work?`
+
 ## 0.1.3 (2018-12-06)
 
  - Fixed bug where subclasses of EasyStalk::Job could not be used as an Abstract Base Class

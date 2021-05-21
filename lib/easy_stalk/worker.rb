@@ -30,6 +30,15 @@ module EasyStalk
 
       while !@cancelled
         pool.with do |beanstalk|
+
+          unless (rate_controller = EasyStalk.configuration.worker_rate_controller).nil?
+            rate_controller.poll
+            unless rate_controller.do_work?
+              sleep 1
+              next
+            end
+          end
+
           job = get_one_job(beanstalk)
           # continue around the loop if we got a timeout reserving a job
           # (that is to say, if there's nothing in this tube)

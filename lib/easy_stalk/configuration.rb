@@ -11,7 +11,8 @@ module EasyStalk
                 :beanstalkd_urls,
                 :pool_size,
                 :timeout_seconds,
-                :worker_reconnect_seconds
+                :worker_reconnect_seconds,
+                :worker_rate_controller
 
     DEFAULT_POOL_SIZE = 5
     DEFAULT_TIMEOUT_SECONDS = 10
@@ -120,6 +121,16 @@ module EasyStalk
       else
         logger.warn "Invalid worker_reconnect_seconds #{seconds}. Using default."
         @worker_reconnect_seconds = DEFAULT_WORKER_RECONNECT_SECONDS
+      end
+    end
+
+    def worker_rate_controller=(controller)
+      if controller.respond_to?(:poll) && controller.respond_to?(:do_work?)
+        @worker_rate_controller = controller
+      else
+        # log nothing if we are intentionally setting it to nil, since that's also a valid value
+        logger.warn "Invalid worker_rate_controller #{controller}. Using none." unless controller.nil?
+        @worker_rate_controller = nil
       end
     end
 

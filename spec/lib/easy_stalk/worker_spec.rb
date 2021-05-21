@@ -180,6 +180,47 @@ describe EasyStalk::Worker do
         fail_proc = Proc.new { |job, ex| EasyStalk.logger.warn "warn!" }
         expect { subject.work(job_instance.class, on_fail: fail_proc) }.to_not raise_error
       end
+
+      context 'with a rate controller defined' do
+        before do
+          class TestRateController
+            def self.poll
+            end
+            def self.do_work?
+            end
+          end
+
+          EasyStalk.configure do |config|
+            # beanstalkd_urls needs to be present
+            config.beanstalkd_urls        = ["localhost:11300"]
+            config.worker_rate_controller = TestRateController
+          end
+        end
+
+        specify 'invokes methods on the rate controller' do
+          expect(TestRateController).to receive(:poll).exactly(3).times
+          expect(TestRateController).to receive(:do_work?).exactly(3).times.and_return(true)
+
+          expect(EasyStalk.logger).to receive(:info).at_least(1).times
+          beanstalk = EasyStalk::MockBeaneater.new
+          tubes = EasyStalk::MockBeaneater::Tubes.new
+          tubes.watch!(ValidJob)
+          expect(Beaneater).to receive(:new).and_return beanstalk
+          expect(beanstalk).to receive(:tubes).and_return(tubes).at_least(1).times
+          expect(tubes).to receive(:watch!).with("job_tube")
+          sample_job = EasyStalk::MockBeaneater::TubeItem.new("{}", nil, nil, nil, job_instance.class.tube_name)
+          expect(tubes).to receive(:reserve) {
+            @count ||= 0
+            if @count < 2
+              @count = @count + 1
+            else
+              subject.send :cleanup
+            end
+            sample_job
+          }.exactly(3).times
+          expect { subject.work(job_instance.class) }.to_not raise_error
+        end
+      end
     end
 
     context "with no job class" do
