@@ -7,6 +7,7 @@ require_relative 'job'
 module EasyStalk
   class Worker
     RESERVE_TIMEOUT = 3
+    GC_EVERY_N_JOBS = 20
 
     def work(job_classes = nil, on_fail: nil)
       job_classes = [job_classes] unless job_classes.instance_of?(Array)
@@ -27,6 +28,8 @@ module EasyStalk
       ]
 
       pool = EasyStalk::Client.create_worker_pool(tube_class_hash.keys)
+
+      jobs_since_gc = 0
 
       while !@cancelled
         pool.with do |beanstalk|
@@ -50,6 +53,11 @@ module EasyStalk
           else
             # Job Succeeded!
             job.delete
+          end
+          jobs_since_gc += 1
+          if jobs_since_gc > GC_EVERY_N_JOBS
+            GC.start
+            jobs_since_gc = 0
           end
         end
       end
