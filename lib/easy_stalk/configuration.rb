@@ -11,7 +11,8 @@ module EasyStalk
                 :beanstalkd_urls,
                 :pool_size,
                 :timeout_seconds,
-                :worker_reconnect_seconds
+                :worker_reconnect_seconds,
+                :worker_gc_interval
 
     DEFAULT_POOL_SIZE = 5
     DEFAULT_TIMEOUT_SECONDS = 10
@@ -22,6 +23,7 @@ module EasyStalk
     DEFAULT_TTR = 120 # seconds
     DEFAULT_DELAY = 0 # seconds
     DEFAULT_RETRY_TIMES = 5
+    DEFAULT_WORKER_GC_INTERVAL = 20  # jobs
 
     def initialize
       @logger = Logger.new($stdout).tap do |log|
@@ -40,9 +42,10 @@ module EasyStalk
       self.default_retry_times = DEFAULT_RETRY_TIMES
       # FROM CLIENT
       self.beanstalkd_urls = ENV['BEANSTALKD_URLS']
-      self.pool_size = ENV['BEANSTALKD_POOL_SIZE'] || DEFAULT_POOL_SIZE
-      self.timeout_seconds = ENV['BEANSTALKD_TIMEOUT_SECONDS'] || DEFAULT_TIMEOUT_SECONDS
-      self.worker_reconnect_seconds = ENV['BEANSTALKD_WORKER_RECONNECT_SECONDS'] || DEFAULT_WORKER_RECONNECT_SECONDS
+      self.pool_size = (ENV['BEANSTALKD_POOL_SIZE'] || DEFAULT_POOL_SIZE).to_i
+      self.timeout_seconds = (ENV['BEANSTALKD_TIMEOUT_SECONDS'] || DEFAULT_TIMEOUT_SECONDS).to_i
+      self.worker_reconnect_seconds = (ENV['BEANSTALKD_WORKER_RECONNECT_SECONDS'] || DEFAULT_WORKER_RECONNECT_SECONDS).to_i
+      self.worker_gc_interval = (ENV['BEANSTALKD_WORKER_GC_INTERVAL'] || DEFAULT_WORKER_GC_INTERVAL).to_i
     end
 
     def default_tube_prefix=(tube_prefix)
@@ -120,6 +123,15 @@ module EasyStalk
       else
         logger.warn "Invalid worker_reconnect_seconds #{seconds}. Using default."
         @worker_reconnect_seconds = DEFAULT_WORKER_RECONNECT_SECONDS
+      end
+    end
+
+    def worker_gc_interval=(jobs)
+      if jobs.respond_to?(:to_i) && jobs.to_i > 0
+        @worker_gc_interval = jobs.to_i
+      else
+        logger.warn "Invalid worker_gc_interval #{jobs}. Using default."
+        @worker_gc_interval = DEFAULT_WORKER_GC_INTERVAL
       end
     end
 
