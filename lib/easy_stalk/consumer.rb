@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class EasyStalk::Consumer
+EasyStalk::Consumer = Struct.new(:job) do
   SECONDS_IN_DAY = 24 * 60 * 60
 
   class << self
@@ -64,19 +64,12 @@ class EasyStalk::Consumer
 
     def consume(job)
       job_consumer = new(job)
+      job_consumer.consume
 
-      job_consumer.consume.tap do
-        job.complete
-      end
+      job.complete
     rescue StandardError => e
       job_consumer&.on_error(e)
     end
-  end
-
-  attr_reader :job
-
-  def initialize(job)
-    @job = job
   end
 
   def consume
