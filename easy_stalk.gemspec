@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.date        = '2018-12-06'
   spec.summary     = 'EasyStalk - An easy way to use beanstalkd for jobs'
   spec.description = 'A simple beanstalk client, worker, and job setup'
-  spec.authors     = ['Jing-ta Chow']
+  spec.authors     = ['Joshua Lane', 'Jing-ta Chow']
   spec.email       = 'dev@easypost.com'
   spec.license     = 'MIT'
 
