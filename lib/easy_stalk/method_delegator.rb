@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class EasyStalk::MethodDelegator
-  InvalidArgument = Class.new(StandardError)
-
   def self.delegate(message, to:)
     signature = new(message, to).load
 
@@ -28,14 +26,14 @@ class EasyStalk::MethodDelegator
   def dump
     receiver.parameters.each_with_object({}) do |(constraint, argument), payload|
       case constraint
-      when :key, :req
+      when :key
         payload[argument] = data[argument] if data.key?(argument)
       when :keyreq
         payload[argument] = data.fetch(argument)
       when :keyrest
         payload.merge!(data)
-      when :block, :opt
-        raise InvalidArgument, "cannot serialize payload into #{constraint} #{argument}"
+      when :block, :opt, :req
+        raise ArgumentError, "cannot serialize payload into #{constraint} #{argument}"
       else
         raise NotImplementedError
       end
@@ -54,7 +52,7 @@ class EasyStalk::MethodDelegator
       when :keyrest
         signature.merge!(payload.inject({}) { |a, (k, v)| a.merge(k.to_sym => v) })
       when :block, :opt, :req
-        raise InvalidArgument, "cannot deserialize payload into #{constraint} #{argument}"
+        raise ArgumentError, "cannot deserialize payload into #{constraint} #{argument}"
       else
         raise NotImplementedError, "unsupported argument constraint: #{constraint}"
       end

@@ -50,6 +50,7 @@ class EasyStalk::Job
   end
 
   attr_reader :finished
+  alias finished? finished
   attr_reader :buried
 
   private

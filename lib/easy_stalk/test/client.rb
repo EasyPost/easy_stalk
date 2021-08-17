@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class EasyStalk::Test::Client
+  include Enumerable
+
   Job = Struct.new(:body, :priority, :tube, :time_to_run, :delay, :releases)
 
   attr_reader :buried
@@ -19,14 +21,16 @@ class EasyStalk::Test::Client
 
   def push(data, tube:, priority: EasyStalk.default_job_priority,
            delay: EasyStalk.default_job_delay, time_to_run: EasyStalk.default_job_time_to_run)
-    Job.new(
+
+    payload = Job.new(
       EasyStalk::Job.encode(data), priority, tube, time_to_run, delay, 0
-    ).tap do |job|
-      ready << job
-    end
+    )
+    ready << payload
+
+    payload
   end
 
-  def pop(timeout:) # rubocop:disable Lint/UnusedMethodArgument
+  def each(timeout:) # rubocop:disable Lint/UnusedMethodArgument
     next_job = ready.shift
     return unless next_job
 

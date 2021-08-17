@@ -9,10 +9,10 @@ RSpec.describe EasyStalk::Consumer do
         end
 
         alias_method :inspect, :to_s
-      end
 
-      def on_error(exception)
-        raise exception
+        def consume(job)
+          new(job).consume
+        end
       end
     end
   end
@@ -66,12 +66,33 @@ RSpec.describe EasyStalk::Consumer do
   end
 
   describe '.consume' do
-    let(:job) { instance_double(EasyStalk::Job, complete: true, body: body) }
+    let(:payload) { client.push(body, tube: 'foo') }
+    let(:client) { EasyStalk::Test::Client.new }
     let(:body) { { 'foo' => 'bar' } }
 
-    subject(:consume) { consumer.consume(job) }
+    subject(:consume) { consumer.consume(EasyStalk::Job.new(payload, client: client)) }
 
     specify { expect { consume }.to raise_error(NotImplementedError) }
+
+    context 'on error' do
+      let(:consumer) do
+        Class.new(EasyStalk::Consumer) do
+          class << self
+            def to_s
+              'consumer'
+            end
+
+            alias_method :inspect, :to_s
+          end
+
+          def call
+            raise 'retry me'
+          end
+        end
+      end
+
+      specify { expect { consume }.to change(client, :delayed).to(payload => a_value > 0) }
+    end
 
     context '#call()' do
       before do
@@ -118,7 +139,7 @@ RSpec.describe EasyStalk::Consumer do
         end
       end
 
-      specify { expect { consume }.to raise_error(EasyStalk::MethodDelegator::InvalidArgument) }
+      specify { expect { consume }.to raise_error(ArgumentError) }
     end
 
     context '#call(:key,:keyrest)' do

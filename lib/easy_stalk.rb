@@ -53,6 +53,7 @@ module EasyStalk
   end
 end
 
+require_relative 'easy_stalk/client'
 require_relative 'easy_stalk/configuration'
 require_relative 'easy_stalk/consumer'
 require_relative 'easy_stalk/dispatcher'

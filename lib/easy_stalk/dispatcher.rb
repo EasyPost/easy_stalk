@@ -39,7 +39,7 @@ class EasyStalk::Dispatcher
   end
 
   def run
-    client.pop(timeout: reserve_timeout) do |job|
+    client.each(timeout: reserve_timeout) do |job|
       EasyStalk.tube_consumers.fetch(job.tube).consume(
         EasyStalk::Job.new(job, client: client)
       )

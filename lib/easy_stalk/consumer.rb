@@ -89,14 +89,9 @@ class EasyStalk::Consumer
 
   def on_error(exception, logger: EasyStalk.logger)
     logger.error { exception.inspect }
-    retry_or_bury(job)
-  end
 
-  def retry_or_bury(job)
-    if job.retries < self.class.retry_limit
-      job.delayed_release
-    else
-      job.dead
-    end
+    return if job.finished?
+
+    job.retries < self.class.retry_limit ? job.delayed_release : job.dead
   end
 end
