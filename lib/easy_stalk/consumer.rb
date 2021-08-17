@@ -83,7 +83,7 @@ class EasyStalk::Consumer
     EasyStalk::MethodDelegator.delegate(job.body, to: method(:call))
   end
 
-  def call(**)
+  def call(*, **)
     raise NotImplementedError
   end
 

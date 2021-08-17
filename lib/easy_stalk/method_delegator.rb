@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class EasyStalk::MethodDelegator
+EasyStalk::MethodDelegator = Struct.new(:message, :receiver) do
   def self.delegate(message, to:)
     signature = new(message, to).load
 
@@ -13,14 +13,6 @@ class EasyStalk::MethodDelegator
 
   def self.serialize(message, format:)
     new(message, format).dump
-  end
-
-  attr_reader :message
-  attr_reader :receiver
-
-  def initialize(message, receiver)
-    @message = message
-    @receiver = receiver
   end
 
   def dump
