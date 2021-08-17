@@ -6,36 +6,17 @@ A simple beanstalkd client for ruby
 
 This gem aims to provide a very simple way to use [beanstalkd](https://github.com/kr/beanstalkd) for asynchronous jobs in your ruby applications.
 
-There are 3 main concepts presented: a Job, a Client, and a Worker.
-
-
-### Updates
-
-To update EasyStalk, please make sure the appropriate changes are made in the following places:
-* `easy_stalk.gemspec`
-* `lib/easy_stalk.rb`
-* `CHANGELOG.md`
-
-In addition, please rebundle the gems so that the version in `Gemfile.lock` gets updated.
-
+There are several important concepts:
+* Job (`EasyStalk::Job`) - data produced to a specific topic
+* Consumer (`EasyStalk::Consumer`) - a Ruby class that is assigned to one or more topics and acts on a job
+* Client (`EasyStalk::Client`) - can add jobs to or consume jobs from some number of tubes and servers
 
 ### EasyStalk::Job
 
-EasyStalk::Job is a simple class based on the [interactor gem](https://github.com/collectiveidea/interactor).
-The only requirements are to inherit from `EasyStalk::Job`, define the keys to serialize using the `serialize_context_keys` method, and implement a call method that has access to an object name 'context', which is essentially an ostruct with your serializable keys on it.
-
-When constructing your job, just pass in a hash (or an Interactor::Context), and any keys not defined in `serializable_context_keys` will be sanitized out upon enqueue.
-Enqueing the Job will place it in the appropriate beanstalkd queue, with the defined job settings and context data specified by the `serializable_context_keys`.
-
 ```ruby
-class TextPrintingJob < EasyStalk::Job
-  serializable_context_keys :string_to_print, :scheduled_at
-
-  def call
-    text = context.string_to_print
-    enqueued_time = context.scheduled_at
-
-    puts "Job enqueued at #{enqueued_time} is running and saying #{text}"
+class TextPrintingJob < EasyStalk::Consumer
+  def call(string_to_print:, scheduled_at:)
+    puts "Job enqueued at #{scheduled_at} is running and saying #{string_to_print}"
   end
 end
 
