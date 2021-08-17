@@ -4,6 +4,7 @@
 require 'json'
 require 'logger'
 require 'timeout'
+require 'set'
 
 # deps
 require 'beaneater'
