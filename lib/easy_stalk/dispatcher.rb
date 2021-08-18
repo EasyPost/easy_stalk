@@ -15,6 +15,10 @@ EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout, keyword_init: true
     dispatcher.shutdown_on(signals: shutdown_signals).run
   end
 
+  def initialize(reserve_timeout: DEFAULT_RESERVE_TIMEOUT, client: EasyStalk::Client.default)
+    super
+  end
+
   def shutdown_on(signals:)
     signals.each { |signal| trap(signal, &method(:shutdown!)) }
 
@@ -41,7 +45,7 @@ EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout, keyword_init: true
       EasyStalk
         .tube_consumers
         .fetch(job.tube)
-        .consume(EasyStalk::Job.new(job, client: client))
+        .consume(job)
     end
   rescue StopIteration
     EasyStalk.logger.warn { 'Ran out of work' }

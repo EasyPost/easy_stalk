@@ -2,11 +2,19 @@
 
 RSpec.describe 'produce and consumer', :integration do
   specify do
-    Class.new(EasyStalk::Consumer) do
+    consumer = Class.new(EasyStalk::Consumer) do
       assign 'foo'
 
+      def self.jobs
+        @jobs ||= []
+      end
+
       def call(bar:)
-        puts bar
+        self.class.jobs << [job, bar]
+      end
+
+      def on_error(exception)
+        raise exception
       end
     end
 
@@ -19,9 +27,9 @@ RSpec.describe 'produce and consumer', :integration do
     worker = Thread.new { dispatcher.run }
 
     EasyStalk::Client.default.push({ bar: 'baz' }, tube: 'foo')
-
-    sleep(3)
+    Timeout.timeout(3) { worker.value }
     dispatcher.shutdown!
-    worker.value
+
+    expect(consumer.jobs).to contain_exactly([an_instance_of(EasyStalk::Job), 'baz'])
   end
 end

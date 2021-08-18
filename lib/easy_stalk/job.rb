@@ -11,17 +11,15 @@ EasyStalk::Job = Class.new(SimpleDelegator) do
 
   attr_reader :client
   attr_reader :job
+  attr_reader :body
 
   def initialize(job, client: EasyStalk::Client.default)
     @client = client
     @finished = false
     @buried = false
     @job = job
+    @body ||= job.body.nil? ? nil : JSON.parse(job.body)
     super(job)
-  end
-
-  def body
-    @body ||= JSON.parse(job.body)
   end
 
   def delayed_release
@@ -37,7 +35,7 @@ EasyStalk::Job = Class.new(SimpleDelegator) do
   alias_method :delayed_retry, :delayed_release
 
   def releases
-    client.releases(job)
+    client.releases(job) || 0
   end
   alias_method :retries, :releases
 

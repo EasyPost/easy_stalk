@@ -51,7 +51,7 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
       job = Timeout.timeout(timeout * 4) { connection.tubes.reserve(timeout) }
       raise TubeEmpty unless job
 
-      yield EasyStalk::Job.new(job)
+      yield EasyStalk::Job.new(job, client: self)
     end
   rescue TubeEmpty
     yield nil
