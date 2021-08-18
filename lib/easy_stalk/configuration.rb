@@ -5,8 +5,8 @@ class EasyStalk::Configuration
 
   def initialize(connection_max_age: 300, default_job_delay: 0, default_job_priority: 500,
                  default_job_retry_limit: 5, default_job_time_to_run: 120, timeout_seconds: 10,
-                 server_urls: nil, pool_size: 5, tube_prefix: nil)
-    self.server_urls = server_urls
+                 servers: nil, pool_size: 5)
+    self.servers = servers
     self.connection_max_age = connection_max_age
     self.default_job_delay = default_job_delay
     self.default_job_priority = default_job_priority
@@ -14,7 +14,6 @@ class EasyStalk::Configuration
     self.default_job_time_to_run = default_job_time_to_run
     self.pool_size = pool_size
     self.timeout_seconds = timeout_seconds
-    self.tube_prefix = tube_prefix
   end
 
   def logger
@@ -23,12 +22,6 @@ class EasyStalk::Configuration
     end
   end
   attr_writer :logger
-
-  # @return [String] default: ""
-  def tube_prefix
-    @tube_prefix ||= ENV.fetch('BEANSTALKD_TUBE_PREFIX') { '' }
-  end
-  attr_writer :tube_prefix
 
   attr_reader :default_job_priority
   def default_job_priority=(default_job_priority)
@@ -59,10 +52,10 @@ class EasyStalk::Configuration
   end
 
   # @return [String] default: ENV['BEANSTALKD_URLS'] as comma separated urls
-  def server_urls
-    @server_urls ||= ENV.fetch('BEANSTALKD_URLS').split(',').map(&:strip)
+  def servers
+    @servers ||= ENV.fetch('BEANSTALKD_URLS', 'localhost:11300').split(',').map(&:strip)
   end
-  attr_writer :server_urls
+  attr_writer :servers
 
   attr_reader :pool_size
   def pool_size=(pool_size)

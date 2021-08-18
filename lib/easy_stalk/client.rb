@@ -11,20 +11,29 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
 
   TubeEmpty = Class.new(StandardError)
 
-  def initialize(producer: EasyStalk::ProducerPool.default,
-                 consumer: EasyStalk::ConsumerPool.default)
+  def initialize(
+    producer: EasyStalk::ProducerPool.default,
+    consumer: EasyStalk::ConsumerPool.default
+  )
     super(producer, consumer)
   end
 
-  def push(data, tube:, priority: EasyStalk.default_job_priority,
-           delay: EasyStalk.default_job_delay, time_to_run: EasyStalk.default_job_time_to_run)
+  def push(
+    data,
+    tube:,
+    priority: EasyStalk.default_job_priority,
+    delay: EasyStalk.default_job_delay,
+    time_to_run: EasyStalk.default_job_time_to_run
+  )
     producer.with do |connection|
-      connection.tubes
-                .fetch(EasyStalk.tube_name(tube))
-                .put(EasyStalk::Job.encode(data),
-                     pri: priority,
-                     ttr: time_to_run,
-                     delay: [delay, 0].max)
+      connection
+        .tubes[tube]
+        .put(
+          EasyStalk::Job.encode(data),
+          pri: priority,
+          ttr: time_to_run,
+          delay: [delay, 0].compact.max
+        )
     end
 
     true
@@ -48,9 +57,7 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
     retry
   rescue Beaneater::TimedOutError
     # Failed to reserve a job, tube is likely empty
-    EasyStalk.logger.debug do
-      "#{connection} failed to reserve jobs within #{reserve_timeout} seconds"
-    end
+    EasyStalk.logger.debug { "failed to reserve jobs within #{timeout} seconds" }
     retry
   end
 

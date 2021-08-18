@@ -11,70 +11,41 @@ There are several important concepts:
 * Consumer (`EasyStalk::Consumer`) - a Ruby class that is assigned to one or more topics and acts on a job
 * Client (`EasyStalk::Client`) - can add jobs to or consume jobs from some number of tubes and servers
 
-### EasyStalk::Job
+## Concepts
+
+### `EasyStalk::Job`
 
 ```ruby
 class TextPrintingJob < EasyStalk::Consumer
+  assign 'text_printing'
+
   def call(string_to_print:, scheduled_at:)
     puts "Job enqueued at #{scheduled_at} is running and saying #{string_to_print}"
   end
 end
-
-# To enqueue the job
-job_instance = TextPrintingJob.new({string_to_print: "Hello World!", scheduled_at: DateTime.now})
-EasyStalk::Client.enqueue(job_instance)
 ```
 
-You can further customize/override a number of settings:
+To enqueue an instance of a job:
 
 ```ruby
-class AdvancedTextPrintingJob < EasyStalk::Job
-  serializable_context_keys :string_to_print, :scheduled_at
-
-  tube_name "custom_tube" # defaults to the class name
-  tube_prefix "custom.tube.prefix." # defaults to ENV['BEANSTALKD_TUBE_PREFIX']
-  priority 20 # defaults to 500. 0 is highest priority
-  time_to_run 30 # defaults to 120 seconds
-  delay (60 * 5) # defaults to 0 seconds
-
-  def call
-    # Some awesome job logic
-  end
-end
+TextPrintingJob.enqueue({string_to_print: "Hello World!", scheduled_at: Time.now})
 ```
 
-To test your jobs, you can simply treat them as Interactors, and run `TextPrintingJob.call(sample_params)` to execute them directly.
+To enqueue the job manually:
 
- Note, when processing the job via the Worker, the keys available in the context will only be the values specified by `serializable_context_keys`, but If you call the job directly, for example in tests, the context will have access to anything passed in.
-
-
-### EasyStalk::Client
-
-The client contains a reference to a singleton [connection pool](https://github.com/EasyPost/EzPool) which connects to beanstalk instances using the [beaneater gem](https://github.com/beanstalkd/beaneater)
-
-The client requires an ENV var of `BEANSTALKD_URLS` to be present, which contains a comma separated string of host:port combinations which are randomly selected for connections.
-
-Other configurable values are `BEANSTALKD_TIMEOUT_SECONDS` which defaults to 10, and `BEANSTALKD_POOL_SIZE` which defaults to 5, and are passed along to the connection pool.
-
-Using the client is as simple as calling `EasyStalk::Client.enqueue(job_instance)`.
-By default, the job's default time_to_run, priority, and delay will be used, and the job will be scheduled to run immediately.
-
-You can override this behavior explicitly by passing in custom values:
 ```ruby
-pri = 1 # Lower is higher priority
-ttr = 10 # seconds to run the job for
-wait_time = 5 # seconds to wait until job is ready. NOTE: gets overridden if delay_until is present
-tomorrow = DateTime.now + 1 # target datetime used to calculate delay
-job_instance = TextPrintingJob.new({string_to_print: "Hello World!", scheduled_at: DateTime.now})
-EasyStalk::Client.enqueue(job_instance, priority: pri, time_to_run: ttr, delay: wait_time, delay_until: tomorrow)
+EasyStalk::Client.default.push(
+    {string_to_print: "Hello World!", scheduled_at: Time.now}, tube: 'text_printing'
+)
 ```
 
-### EasyStalk::Worker
 
-The worker can be started by running `work`.
+### `EasyStalk::Client`
+
+### `EasyStalk::Dispatcher`
 
 ```ruby
-EasyStalk::Worker.new().work
+EasyStalk::Dispatcher.call
 ```
 
 This method currently watches a Job class's tube, running the Job as needed.
@@ -114,7 +85,6 @@ A number of options are configurable in the gem via a config block.
 EasyStalk.configure do |config|
   config.logger = MyLogger.new
   config.default_worker_on_fail = Proc.new { |job_class, job_data, ex| EasyStalk.logger.error "#{ex.message} - #{job_data}" }
-  config.default_tube_prefix = "tube.prefix.name."
   config.default_priority = 10
   config.default_time_to_run = 60
   config.default_delay = 60

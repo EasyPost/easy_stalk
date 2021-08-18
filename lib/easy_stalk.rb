@@ -5,6 +5,7 @@ require 'json'
 require 'logger'
 require 'timeout'
 require 'set'
+require 'delegate'
 
 # deps
 require 'beaneater'
@@ -12,8 +13,6 @@ require 'ezpool'
 
 module EasyStalk
   class << self
-    attr_writer :logger
-
     def logger
       configuration.logger
     end
@@ -54,6 +53,8 @@ module EasyStalk
   end
 end
 
+require_relative 'easy_stalk/producer_pool'
+require_relative 'easy_stalk/consumer_pool'
 require_relative 'easy_stalk/client'
 require_relative 'easy_stalk/configuration'
 require_relative 'easy_stalk/consumer'

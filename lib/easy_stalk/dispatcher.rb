@@ -1,28 +1,24 @@
 # frozen_string_literal: true
 
-class EasyStalk::Dispatcher
+EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout, keyword_init: true) do
+  DEFAULT_SIGNALS = %w[QUIT TERM INT].freeze
+  DEFAULT_RESERVE_TIMEOUT = 3 # seconds
+
   attr_reader :shutdown
 
-  def self.dispatch(client: EasyStalk::Client.default, reserve_timeout: 3)
-    new(tubes, reserve_timeout: reserve_timeout, client: client).tap do |worker|
-      worker.register_signal_handlers
-      worker.start
-    end
+  def self.call(
+    client: EasyStalk::Client.default,
+    reserve_timeout: DEFAULT_RESERVE_TIMEOUT,
+    shutdown_signals: DEFAULT_SIGNALS
+  )
+    dispatcher = new(reserve_timeout: reserve_timeout, client: client)
+    dispatcher.shutdown_on(signals: shutdown_signals).run
   end
 
-  attr_reader :client
-  attr_reader :reserve_timeout
+  def shutdown_on(signals:)
+    signals.each { |signal| trap(signal, &method(:shutdown!)) }
 
-  def initialize(reserve_timeout:, client:)
-    @client = client
-    @reserve_timeout = reserve_timeout
-    @shutdown = false
-  end
-
-  def register_signal_handlers
-    trap('QUIT', &method(:shutdown!))
-    trap('TERM', &method(:shutdown!))
-    trap('INT', &method(:shutdown!))
+    self
   end
 
   def shutdown!
@@ -30,19 +26,26 @@ class EasyStalk::Dispatcher
     self.shutdown = true
   end
 
-  def start
-    EasyStalk.logger.info { "Watching tubes #{tubes.inspect} for jobs" }
-
-    run until shutdown
-
-    EasyStalk.logger.info { "Dispatcher assigned to #{tubes.inspect} has been stopped" }
-  end
-
   def run
-    client.each(timeout: reserve_timeout) do |job|
-      EasyStalk.tube_consumers.fetch(job.tube).consume(
-        EasyStalk::Job.new(job, client: client)
-      )
+    EasyStalk.logger.info do
+      "Watching tubes #{client.consumer.tubes.inspect} for jobs"
+    end
+
+    jobs = client.each(timeout: reserve_timeout)
+
+    until shutdown
+      job = jobs.next
+
+      EasyStalk
+        .tube_consumers
+        .fetch(job.tube)
+        .consume(EasyStalk::Job.new(job, client: client))
+    end
+  rescue StopIteration
+    EasyStalk.logger.warn { 'Ran out of work' }
+  ensure
+    EasyStalk.logger.info do
+      "Dispatcher assigned to #{client.consumer.tubes.inspect} has been stopped"
     end
   end
 

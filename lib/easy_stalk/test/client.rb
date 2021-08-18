@@ -30,7 +30,9 @@ class EasyStalk::Test::Client
     payload
   end
 
-  def each(timeout:) # rubocop:disable Lint/UnusedMethodArgument
+  def each(timeout:)
+    return to_enum(:each, timeout: timeout) unless block_given?
+
     next_job = ready.shift
     return unless next_job
 

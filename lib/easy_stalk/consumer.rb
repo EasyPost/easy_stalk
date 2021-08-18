@@ -8,14 +8,13 @@ EasyStalk::Consumer = Struct.new(:job) do
       @tubes ||= Set.new
     end
 
-    def assign(*assignments, prefix: EasyStalk.tube_prefix)
+    def assign(*assignments)
       assignments.each do |tube|
-        tube_name = prefix + tube
-        existing_consumer = EasyStalk.tube_consumers[tube_name]
+        existing_consumer = EasyStalk.tube_consumers[tube]
         raise ArgumentError, "#{existing_consumer} already assigned to #{tube}" if existing_consumer
 
-        EasyStalk.tube_consumers[tube_name] = self
-        tubes << tube_name
+        EasyStalk.tube_consumers[tube] = self
+        tubes << tube
       end
     end
 
@@ -43,9 +42,15 @@ EasyStalk::Consumer = Struct.new(:job) do
     end
     attr_writer :retry_limit
 
-    def push(client: EasyStalk::Client.default, priority: self.class.priority,
-             time_to_run: self.class.time_to_run, delay: self.class.delay, delay_until: nil,
-             tube: self.class.default_tube, data:)
+    def enqueue(
+      data,
+      client: EasyStalk::Client.default,
+      priority: self.class.priority,
+      time_to_run: self.class.time_to_run,
+      delay: self.class.delay,
+      delay_until: nil,
+      tube: self.class.default_tube
+    )
       if delay_until
         raise ArgumentError, 'cannot specify delay and delay_until' if delay
 
@@ -55,7 +60,13 @@ EasyStalk::Consumer = Struct.new(:job) do
 
       payload = serialize(data)
 
-      client.push(payload, tube: tube, priority: priority, time_to_run: time_to_run, delay: delay)
+      client.push(
+        payload,
+        tube: tube,
+        priority: priority,
+        time_to_run: time_to_run,
+        delay: delay
+      )
     end
 
     def serialize(data)

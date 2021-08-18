@@ -30,7 +30,7 @@ RSpec.describe EasyStalk::Dispatcher do
   describe '#run' do
     subject(:run) { dispatcher.run }
 
-    specify { expect(run).to eq(nil) }
+    specify('does not error with no jobs') { run }
 
     context 'with a job' do
       let!(:job) { client.push({}, tube: 'foo') }
