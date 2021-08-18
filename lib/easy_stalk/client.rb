@@ -54,10 +54,12 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
       yield EasyStalk::Job.new(job)
     end
   rescue TubeEmpty
+    yield nil
     retry
   rescue Beaneater::TimedOutError
     # Failed to reserve a job, tube is likely empty
     EasyStalk.logger.debug { "failed to reserve jobs within #{timeout} seconds" }
+    yield nil
     retry
   end
 

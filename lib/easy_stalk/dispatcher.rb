@@ -36,6 +36,8 @@ EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout, keyword_init: true
     until shutdown
       job = jobs.next
 
+      next unless job
+
       EasyStalk
         .tube_consumers
         .fetch(job.tube)

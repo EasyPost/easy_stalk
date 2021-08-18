@@ -7,24 +7,7 @@ RSpec.describe EasyStalk::Dispatcher do
   describe '#shutdown!' do
     subject(:shutdown!) { dispatcher.shutdown! }
 
-    specify { expect { shutdown! }.to change(dispatcher, :shutdown).from(false).to(true) }
-  end
-
-  describe '#start', :slow do
-    subject(:start) { dispatcher.start }
-
-    before do
-      Thread.new do
-        sleep 0.5
-        dispatcher.shutdown!
-      end
-    end
-
-    specify do
-      expect(dispatcher).to receive(:run).at_least(:once)
-
-      start
-    end
+    specify { expect { shutdown! }.to change(dispatcher, :shutdown).to(true) }
   end
 
   describe '#run' do

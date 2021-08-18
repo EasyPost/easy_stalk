@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class EasyStalk::Job
+EasyStalk::Job = Class.new(SimpleDelegator) do
   AlreadyFinished = Class.new(StandardError)
 
   def self.encode(body)
@@ -10,12 +10,14 @@ class EasyStalk::Job
   end
 
   attr_reader :client
+  attr_reader :job
 
   def initialize(job, client: EasyStalk::Client.default)
-    @job = job
     @client = client
     @finished = false
     @buried = false
+    @job = job
+    super(job)
   end
 
   def body
@@ -32,30 +34,29 @@ class EasyStalk::Job
       client.release(job, delay: delay)
     end
   end
-  alias delayed_retry delayed_release
+  alias_method :delayed_retry, :delayed_release
 
   def releases
     client.releases(job)
   end
-  alias retries releases
+  alias_method :retries, :releases
 
   def bury
     finish { client.bury(job) }
     self.buried = true
   end
-  alias dead bury
+  alias_method :dead, :bury
 
   def complete
     finish { client.complete(job) }
   end
 
   attr_reader :finished
-  alias finished? finished
+  alias_method :finished?, :finished
   attr_reader :buried
 
-  private
+  protected
 
-  attr_reader :job
   attr_writer :finished
   attr_writer :buried
 

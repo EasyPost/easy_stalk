@@ -8,7 +8,7 @@ end
 require_relative '../lib/easy_stalk'
 require_relative '../lib/easy_stalk/test'
 
-EasyStalk.configure.logger = ENV.key?('DEBUG') ? Logger.new(STDOUT) : Logger.new(nil)
+EasyStalk.logger = ENV.key?('DEBUG') ? Logger.new(STDOUT) : Logger.new(nil)
 
 Bundler.require(:test)
 
@@ -21,13 +21,16 @@ RSpec.configure do |config|
     mocks.verify_partial_doubles = true
   end
 
-  config.filter_run_when_matching :focus
   config.example_status_persistence_file_path = 'spec/examples.txt'
   config.disable_monkey_patching!
   config.warnings = true
   config.default_formatter = 'doc' if config.files_to_run.one?
   config.order = :random
   config.before { EasyStalk.tube_consumers.clear }
+  config.around do |e|
+    skip('no beanstalk configured') if e.metadata[:integration] && !ENV.key?('BEANSTALKD_URLS')
+    e.run
+  end
 
   Kernel.srand config.seed
 end
