@@ -67,8 +67,8 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
     job.stats.release
   end
 
-  def release(job, delay:)
-    job.release delay: delay
+  def release(job, delay: 0)
+    job.release(delay: delay)
   end
 
   def bury(job)

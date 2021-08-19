@@ -1,29 +1,58 @@
 # frozen_string_literal: true
 
-class EasyStalk::Test::Client
+EasyStalk::Test::Client = Struct.new(
+  :ready, :delayed, :buried, :completed, :reserved, keyword_init: true
+) do
   include Enumerable
 
-  Job = Struct.new(:body, :priority, :tube, :time_to_run, :delay, :releases)
+  Job = Struct.new(
+    :body, :priority, :tube, :time_to_run, :delay, :releases, :client,
+    :buried, :finished, keyword_init: true
+  ) do
+    alias_method :retries, :releases
+    alias_method :finished?, :finished
+    alias_method :buried?, :buried
+    alias_method :dead?, :buried
 
-  attr_reader :buried
-  attr_reader :reserved
-  attr_reader :completed
-  attr_reader :delayed
-  attr_reader :ready
+    def release(delay: 0)
+      self.releases += 1
+
+      client.delayed[self] = delay
+      client.reserved.delete(self)
+      client.ready << self
+    end
+
+    def bury
+      client.buried << self
+      self.buried = true
+
+      client.reserved.delete(self)
+    end
+    alias_method :dead, :bury
+
+    def complete
+      client.completed << self
+      self.finished = true
+
+      client.reserved.delete(self)
+    end
+  end
 
   def initialize(ready: [], delayed: {}, buried: [], completed: [], reserved: [])
-    @ready = ready
-    @delayed = delayed
-    @buried = buried
-    @completed = completed
-    @reserved = reserved
+    super
   end
 
   def push(data, tube:, priority: EasyStalk.default_job_priority,
            delay: EasyStalk.default_job_delay, time_to_run: EasyStalk.default_job_time_to_run)
 
     payload = Job.new(
-      EasyStalk::Job.encode(data), priority, tube, time_to_run, delay, 0
+      body: EasyStalk::Job.encode(data),
+      priority: priority,
+      tube: tube,
+      time_to_run: time_to_run,
+      delay: delay,
+      releases: 0,
+      client: self
     )
     ready << payload
 
@@ -45,22 +74,15 @@ class EasyStalk::Test::Client
     job.releases
   end
 
-  def release(job, delay:)
-    job.releases += 1
-    delayed[job] = delay
-
-    reserved.delete(job)
+  def release(job, delay: 0)
+    job.release(delay: delay)
   end
 
   def bury(job)
-    buried << job
-
-    reserved.delete(job)
+    job.bury
   end
 
   def complete(job)
-    completed << job
-
-    reserved.delete(job)
+    job.complete
   end
 end

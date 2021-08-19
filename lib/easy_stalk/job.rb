@@ -3,6 +3,13 @@
 EasyStalk::Job = Class.new(SimpleDelegator) do
   AlreadyFinished = Class.new(StandardError)
 
+  ExponentialBackoff = lambda { |releases:|
+    backoff = ((3**(releases + 1)) / 2) * 60
+    jitter = rand(0..backoff / 3)
+
+    backoff + jitter
+  }
+
   def self.encode(body)
     raise TypeError, "cannot serialize #{body.class} to a Hash" unless body.respond_to?(:to_h)
 
@@ -18,19 +25,14 @@ EasyStalk::Job = Class.new(SimpleDelegator) do
     @finished = false
     @buried = false
     @job = job
-    @body ||= job.body.nil? ? nil : JSON.parse(job.body)
+    @body = job.body.nil? ? nil : JSON.parse(job.body)
+
     super(job)
   end
 
-  def delayed_release
-    finish do
-      backoff = ((3**(releases + 1)) / 2) * 60
-      jitter = rand(0..backoff / 3)
-
-      delay = backoff + jitter
-
-      client.release(job, delay: delay)
-    end
+  def delayed_release(delay: ExponentialBackoff)
+    delay_seconds = delay.respond_to?(:call) ? delay.call(releases: releases) : delay
+    finish { client.release(job, delay: delay_seconds) }
   end
   alias_method :delayed_retry, :delayed_release
 
@@ -52,6 +54,8 @@ EasyStalk::Job = Class.new(SimpleDelegator) do
   attr_reader :finished
   alias_method :finished?, :finished
   attr_reader :buried
+  alias_method :dead?, :buried
+  alias_method :buried?, :buried
 
   protected
 
