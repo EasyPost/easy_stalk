@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 
-EasyStalk::Test::Client = Struct.new(
-  :ready, :delayed, :buried, :completed, :reserved, keyword_init: true
-) do
+EasyStalk::Test::Client = Struct.new(:ready, :delayed, :buried, :completed, :reserved) do
   include Enumerable
 
-  Job = Struct.new(
-    :body, :priority, :tube, :time_to_run, :delay, :releases, :client,
-    :buried, :finished, keyword_init: true
-  ) do
+    Job = Struct.new(
+      :body,
+      :priority,
+      :tube,
+      :time_to_run,
+      :delay,
+      :releases,
+      :client,
+      :buried,
+      :finished
+    ) do
     alias_method :retries, :releases
     alias_method :finished?, :finished
     alias_method :buried?, :buried
@@ -39,7 +44,7 @@ EasyStalk::Test::Client = Struct.new(
   end
 
   def initialize(ready: [], delayed: {}, buried: [], completed: [], reserved: [])
-    super
+    super(ready, delayed, buried, completed, reserved)
   end
 
   def tubes
@@ -50,13 +55,15 @@ EasyStalk::Test::Client = Struct.new(
            delay: EasyStalk.default_job_delay, time_to_run: EasyStalk.default_job_time_to_run)
 
     payload = Job.new(
-      body: EasyStalk::Job.encode(data),
-      priority: priority,
-      tube: tube,
-      time_to_run: time_to_run,
-      delay: delay,
-      releases: 0,
-      client: self
+      EasyStalk::Job.encode(data),
+      priority,
+      tube,
+      time_to_run,
+      delay,
+      0,
+      self,
+      false,
+      false
     )
     ready << payload
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout, keyword_init: true) do
+EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout) do
   DEFAULT_SIGNALS = %w[QUIT TERM INT].freeze
   DEFAULT_RESERVE_TIMEOUT = 3 # seconds
 
@@ -16,7 +16,7 @@ EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout, keyword_init: true
   end
 
   def initialize(reserve_timeout: DEFAULT_RESERVE_TIMEOUT, client: EasyStalk::Client.default)
-    super
+    super(client, reserve_timeout)
   end
 
   def shutdown_on(signals:)

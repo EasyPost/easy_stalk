@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-class EasyStalk::Job < Struct.new(
-  :client, :job, :tube, :body, :finished, :buried, keyword_init: true
-)
+class EasyStalk::Job < Struct.new(:client, :job, :tube, :body, :finished, :buried)
   AlreadyFinished = Class.new(StandardError)
 
   ExponentialBackoff = lambda { |releases:|
@@ -21,14 +19,7 @@ class EasyStalk::Job < Struct.new(
   def initialize(job, client: EasyStalk::Client.default)
     body = job.body.nil? ? nil : JSON.parse(job.body)
 
-    super(
-      job: job,
-      buried: false,
-      finished: false,
-      body: body,
-      client: client,
-      tube: job.tube
-    )
+    super(client, job, job.tube, body, false, false)
   end
 
   def delayed_release(delay: ExponentialBackoff)
