@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 EasyStalk::Consumer = Struct.new(:job) do
-  SECONDS_IN_DAY = 24 * 60 * 60
-
   class << self
     def tubes
       @tubes ||= Set.new
@@ -54,8 +52,7 @@ EasyStalk::Consumer = Struct.new(:job) do
       if delay_until
         raise ArgumentError, 'cannot specify delay and delay_until' if delay
 
-        days = delay_until - Time.now
-        delay = (days * SECONDS_IN_DAY).to_i
+        delay = delay_until - Time.now
       end
 
       payload = serialize(data)
