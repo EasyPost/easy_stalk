@@ -31,3 +31,8 @@ Metrics/BlockLength:
 Lint/EmptyWhen:
   Enabled: false
 
+Style/StructInheritance:
+  Enabled: false
+
+Lint/HandleExceptions:
+  Exclude: spec/**/*

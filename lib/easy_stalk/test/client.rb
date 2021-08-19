@@ -42,6 +42,10 @@ EasyStalk::Test::Client = Struct.new(
     super
   end
 
+  def tubes
+    EasyStalk.tubes
+  end
+
   def push(data, tube:, priority: EasyStalk.default_job_priority,
            delay: EasyStalk.default_job_delay, time_to_run: EasyStalk.default_job_time_to_run)
 

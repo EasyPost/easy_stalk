@@ -18,6 +18,10 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
     super(producer, consumer)
   end
 
+  def tubes
+    consumer.tubes
+  end
+
   def push(
     data,
     tube:,
@@ -25,8 +29,8 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
     delay: EasyStalk.default_job_delay,
     time_to_run: EasyStalk.default_job_time_to_run
   )
-    producer.with do |connection|
-      connection
+    producer.with do |beaneater|
+      beaneater
         .tubes[tube]
         .put(
           EasyStalk::Job.encode(data),
@@ -47,28 +51,36 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
     # don't catch Timeout::Error; if that fires, then beanstalkd is
     # messed up, and our best bet is probably to exit noisily
 
-    consumer.with do |connection|
-      job = Timeout.timeout(timeout * 4) { connection.tubes.reserve(timeout) }
-      raise TubeEmpty unless job
+    loop do
+      consumer.with do |beaneater|
+        job = Timeout.timeout(timeout * 4) { beaneater.tubes.reserve(timeout) }
+        raise TubeEmpty unless job
 
-      yield EasyStalk::Job.new(job, client: self)
+        EasyStalk.logger.debug do
+          "Reserved beanstalkd://#{beaneater.connection.host}:#{beaneater.connection.port}/#{job.tube}/#{job.id}"
+        end
+
+        yield EasyStalk::Job.new(job, client: self)
+      end
+    rescue TubeEmpty
+      EasyStalk.logger.debug { 'No jobs available' }
+      yield nil
+    rescue Beaneater::TimedOutError
+      # Failed to reserve a job, tube is likely empty
+      EasyStalk.logger.debug { "failed to reserve jobs within #{timeout} seconds" }
+      yield nil
     end
-  rescue TubeEmpty
-    yield nil
-    retry
-  rescue Beaneater::TimedOutError
-    # Failed to reserve a job, tube is likely empty
-    EasyStalk.logger.debug { "failed to reserve jobs within #{timeout} seconds" }
-    yield nil
-    retry
   end
 
   def releases(job)
-    job.stats.release
+    job.stats.releases
   end
 
-  def release(job, delay: 0)
-    job.release(delay: delay)
+  def release(job, delay: nil, priority: nil)
+    options = {}
+    options[:delay] = delay if delay
+    options[:pri] = priority if priority
+    job.release(options)
   end
 
   def bury(job)

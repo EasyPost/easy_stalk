@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-EasyStalk::Job = Class.new(SimpleDelegator) do
+class EasyStalk::Job < Struct.new(
+  :client, :job, :tube, :body, :finished, :buried, keyword_init: true
+)
   AlreadyFinished = Class.new(StandardError)
 
   ExponentialBackoff = lambda { |releases:|
@@ -16,46 +18,49 @@ EasyStalk::Job = Class.new(SimpleDelegator) do
     JSON.dump(body.to_h)
   end
 
-  attr_reader :client
-  attr_reader :job
-  attr_reader :body
-
   def initialize(job, client: EasyStalk::Client.default)
-    @client = client
-    @finished = false
-    @buried = false
-    @job = job
-    @body = job.body.nil? ? nil : JSON.parse(job.body)
+    body = job.body.nil? ? nil : JSON.parse(job.body)
 
-    super(job)
+    super(
+      job: job,
+      buried: false,
+      finished: false,
+      body: body,
+      client: client,
+      tube: job.tube
+    )
   end
 
   def delayed_release(delay: ExponentialBackoff)
     delay_seconds = delay.respond_to?(:call) ? delay.call(releases: releases) : delay
     finish { client.release(job, delay: delay_seconds) }
   end
-  alias_method :delayed_retry, :delayed_release
+  alias delayed_retry delayed_release
 
   def releases
     client.releases(job) || 0
   end
-  alias_method :retries, :releases
+  alias retries releases
+
+  def release
+    finish { client.release(job) }
+  end
 
   def bury
     finish { client.bury(job) }
     self.buried = true
   end
-  alias_method :dead, :bury
+  alias dead bury
 
   def complete
     finish { client.complete(job) }
   end
 
   attr_reader :finished
-  alias_method :finished?, :finished
+  alias finished? finished
   attr_reader :buried
-  alias_method :dead?, :buried
-  alias_method :buried?, :buried
+  alias dead? buried
+  alias buried? buried
 
   protected
 

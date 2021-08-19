@@ -31,16 +31,14 @@ EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout, keyword_init: true
   end
 
   def run
-    EasyStalk.logger.info do
-      "Watching tubes #{client.consumer.tubes.inspect} for jobs"
-    end
+    EasyStalk.logger.info { "Watching tubes #{client.tubes.inspect} for jobs" }
 
     jobs = client.each(timeout: reserve_timeout)
 
     until shutdown
       job = jobs.next
 
-      next unless job
+      next if job.nil?
 
       EasyStalk
         .tube_consumers
@@ -51,7 +49,7 @@ EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout, keyword_init: true
     EasyStalk.logger.warn { 'Ran out of work' }
   ensure
     EasyStalk.logger.info do
-      "Dispatcher assigned to #{client.consumer.tubes.inspect} has been stopped"
+      "Dispatcher assigned to #{client.tubes.inspect} has been stopped"
     end
   end
 

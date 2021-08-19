@@ -77,7 +77,7 @@ EasyStalk::Consumer = Struct.new(:job) do
       job_consumer = new(job)
       job_consumer.consume
 
-      job.complete
+      job.complete unless job.finished?
     rescue StandardError => e
       job_consumer&.on_error(e)
     end
