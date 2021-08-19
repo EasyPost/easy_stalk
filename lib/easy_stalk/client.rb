@@ -52,23 +52,25 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
     # messed up, and our best bet is probably to exit noisily
 
     loop do
-      consumer.with do |beaneater|
-        job = Timeout.timeout(timeout * 4) { beaneater.tubes.reserve(timeout) }
-        raise TubeEmpty unless job
+      begin
+        consumer.with do |beaneater|
+          job = Timeout.timeout(timeout * 4) { beaneater.tubes.reserve(timeout) }
+          raise TubeEmpty unless job
 
-        EasyStalk.logger.debug do
-          "Reserved beanstalkd://#{beaneater.connection.host}:#{beaneater.connection.port}/#{job.tube}/#{job.id}"
+          EasyStalk.logger.debug do
+            "Reserved beanstalkd://#{beaneater.connection.host}:#{beaneater.connection.port}/#{job.tube}/#{job.id}"
+          end
+
+          yield EasyStalk::Job.new(job, client: self)
         end
-
-        yield EasyStalk::Job.new(job, client: self)
+      rescue TubeEmpty
+        EasyStalk.logger.debug { 'No jobs available' }
+        yield nil
+      rescue Beaneater::TimedOutError
+        # Failed to reserve a job, tube is likely empty
+        EasyStalk.logger.debug { "failed to reserve jobs within #{timeout} seconds" }
+        yield nil
       end
-    rescue TubeEmpty
-      EasyStalk.logger.debug { 'No jobs available' }
-      yield nil
-    rescue Beaneater::TimedOutError
-      # Failed to reserve a job, tube is likely empty
-      EasyStalk.logger.debug { "failed to reserve jobs within #{timeout} seconds" }
-      yield nil
     end
   end
 
