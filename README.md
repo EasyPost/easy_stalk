@@ -39,7 +39,6 @@ EasyStalk::Client.default.push(
 )
 ```
 
-
 ### `EasyStalk::Client`
 
 ### `EasyStalk::Dispatcher`

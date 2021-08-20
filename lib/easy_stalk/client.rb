@@ -86,7 +86,7 @@ EasyStalk::Client = Struct.new(:producer, :consumer) do
   end
 
   def bury(job)
-    job.dead
+    job.bury
   end
 
   def complete(job)

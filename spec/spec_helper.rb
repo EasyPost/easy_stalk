@@ -11,6 +11,7 @@ require_relative '../lib/easy_stalk/test'
 EasyStalk.logger = ENV.key?('DEBUG') ? Logger.new(STDOUT) : Logger.new(nil)
 
 Bundler.require(:test)
+require 'securerandom'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|

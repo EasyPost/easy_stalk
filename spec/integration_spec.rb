@@ -13,14 +13,22 @@ RSpec.describe 'produce and consume', :integration, :slow do
   before { dispatcher.client.consumer.with { |connection| connection.tubes['foo'].clear } }
   let(:worker) { Thread.new { dispatcher.run } }
 
+  let(:test_consumer) {
+    Class.new(EasyStalk::Consumer) do
+      def self.jobs
+        @jobs ||= []
+      end
+
+      def on_error(exception)
+        raise exception
+      end
+    end
+  }
+
   context 'with a consumer that releases once' do
     let!(:consumer) do
-      Class.new(EasyStalk::Consumer) do
+      Class.new(test_consumer) do
         assign 'foo'
-
-        def self.jobs
-          @jobs ||= []
-        end
 
         def call(bar:, foo: 'bar')
           self.class.jobs << [
@@ -31,10 +39,6 @@ RSpec.describe 'produce and consume', :integration, :slow do
           raise 'too many releases' if self.class.jobs.size > 5
 
           job.release if job.releases == 0
-        end
-
-        def on_error(exception)
-          raise exception
         end
       end
     end
@@ -56,6 +60,37 @@ RSpec.describe 'produce and consume', :integration, :slow do
           releases: 1
         ],
       )
+    end
+  end
+
+  context 'with a consumer that errors' do
+    let!(:consumer) do
+      Class.new(EasyStalk::Consumer) do
+        assign 'foo'
+        self.retry_limit = 3
+
+        def call
+          raise 'try again'
+        end
+
+        def retry_job
+          job.release
+        end
+      end
+    end
+
+    specify 'retries the specified amount and then buries' do
+      body = {id: SecureRandom.hex(5)}
+      EasyStalk::Client.default.push(body, tube: 'foo')
+      Timeout.timeout(1) { worker.value } rescue Timeout::Error
+      dispatcher.shutdown!
+
+      EasyStalk::Client.default.consumer.with do |conn|
+        expect(conn.tubes['foo'].peek(:buried)).to have_attributes(
+          body: JSON.dump(body),
+          stats: having_attributes(releases: 3),
+        )
+      end
     end
   end
 end

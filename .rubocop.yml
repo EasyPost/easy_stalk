@@ -34,5 +34,5 @@ Lint/EmptyWhen:
 Style/StructInheritance:
   Enabled: false
 
-Lint/HandleExceptions:
+Lint/SuppressedException:
   Exclude: spec/**/*

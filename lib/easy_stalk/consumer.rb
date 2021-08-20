@@ -77,6 +77,8 @@ EasyStalk::Consumer = Struct.new(:job) do
       job.complete unless job.finished?
     rescue StandardError => e
       job_consumer&.on_error(e)
+      return if job.finished?
+      job.retries < self.retry_limit ? job_consumer&.retry_job : job_consumer&.bury_job
     end
   end
 
@@ -84,15 +86,19 @@ EasyStalk::Consumer = Struct.new(:job) do
     EasyStalk::MethodDelegator.delegate(job.body, to: method(:call))
   end
 
-  def call(*, **)
+  def call(**)
     raise NotImplementedError
   end
 
   def on_error(exception, logger: EasyStalk.logger)
     logger.error { exception.inspect }
+  end
 
-    return if job.finished?
+  def retry_job
+    job.delayed_release
+  end
 
-    job.retries < self.class.retry_limit ? job.delayed_release : job.dead
+  def bury_job
+    job.bury
   end
 end
