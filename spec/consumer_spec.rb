@@ -10,7 +10,7 @@ RSpec.describe EasyStalk::Consumer do
 
         alias_method :inspect, :to_s
 
-        def consume(job)
+        def call(job)
           new(job).consume
         end
       end
@@ -70,7 +70,7 @@ RSpec.describe EasyStalk::Consumer do
     let(:client) { EasyStalk::Test::Client.new }
     let(:body) { { 'foo' => 'bar' } }
 
-    subject(:consume) { consumer.consume(EasyStalk::Job.new(payload, client: client)) }
+    subject(:consume) { consumer.call(EasyStalk::Job.new(payload, client: client)) }
 
     specify { expect { consume }.to raise_error(NotImplementedError) }
 

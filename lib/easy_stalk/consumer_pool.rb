@@ -13,11 +13,12 @@ EasyStalk::ConsumerPool = Class.new(SimpleDelegator) do
   # @param tubes [Array] List of tubes to connection to
   # @param servers [Enumerable] Enumerator that produces the next host to connection to.
   # @param max_age [Array] Duration of connection to a given host
-  def initialize(tubes: EasyStalk.tubes,
-                 servers: EasyStalk.servers.shuffle.to_enum.cycle,
-                 timeout: 5, # seconds
-                 max_age: EasyStalk.connection_max_age)
-
+  def initialize(
+    tubes: EasyStalk.tubes,
+    servers: EasyStalk.servers.shuffle.to_enum.cycle,
+    timeout: 5, # seconds
+    max_age: EasyStalk.connection_max_age
+    )
     servers = servers.to_enum unless servers.is_a?(Enumerable)
 
     @servers = servers

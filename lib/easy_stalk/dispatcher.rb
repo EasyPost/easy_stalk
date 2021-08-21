@@ -43,7 +43,7 @@ EasyStalk::Dispatcher = Struct.new(:client, :reserve_timeout) do
       EasyStalk
         .tube_consumers
         .fetch(job.tube)
-        .consume(job)
+        .call(job)
     end
   rescue StopIteration
     EasyStalk.logger.warn { 'Ran out of work' }

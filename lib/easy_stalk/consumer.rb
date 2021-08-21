@@ -70,15 +70,14 @@ EasyStalk::Consumer = Struct.new(:job) do
       EasyStalk::MethodDelegator.serialize(data, specification: method(:call))
     end
 
-    def consume(job)
-      job_consumer = new(job)
-      job_consumer.consume
-
-      job.complete unless job.finished?
+    def call(job)
+      consumer = new(job)
+      consumer.consume
     rescue StandardError => e
-      job_consumer&.on_error(e)
-      return if job.finished?
-      job.retries < self.retry_limit ? job_consumer&.retry_job : job_consumer&.bury_job
+      EasyStalk.logger.error { e.inspect }
+      consumer&.on_error(e)
+    else
+      job.complete unless job.finished?
     end
   end
 
@@ -90,8 +89,8 @@ EasyStalk::Consumer = Struct.new(:job) do
     raise NotImplementedError
   end
 
-  def on_error(exception, logger: EasyStalk.logger)
-    logger.error { exception.inspect }
+  def on_error(exception)
+    job.retries < self.class.retry_limit ? retry_job : bury_job
   end
 
   def retry_job

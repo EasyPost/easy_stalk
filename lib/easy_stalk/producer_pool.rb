@@ -18,7 +18,13 @@ EasyStalk::ProducerPool = Class.new(SimpleDelegator) do
     @max_age = max_age
     @size = size
 
-    super(create_pool(size: size, timeout: timeout, max_age: max_age, servers: servers))
+    super(
+      create_pool(
+        size: size,
+        timeout: timeout,
+        max_age: max_age,
+        servers: servers
+    ))
   end
 
   protected

@@ -22,6 +22,10 @@ RSpec.describe 'produce and consume', :integration, :slow do
       def on_error(exception)
         raise exception
       end
+
+      def retry_job
+        job.release
+      end
     end
   }
 
@@ -90,6 +94,29 @@ RSpec.describe 'produce and consume', :integration, :slow do
           body: JSON.dump(body),
           stats: having_attributes(releases: 3),
         )
+      end
+    end
+  end
+
+  context 'with a consumer that finishes without exception' do
+    let!(:consumer) do
+      Class.new(EasyStalk::Consumer) do
+        assign 'foo'
+        self.retry_limit = 3
+
+        def call
+          self.class.jobs << [job.body, releases: job.releases]
+        end
+      end
+    end
+
+    specify 'retries the specified amount and then buries' do
+      EasyStalk::Client.default.push(nil, tube: 'foo')
+      Timeout.timeout(1) { worker.value } rescue Timeout::Error
+      dispatcher.shutdown!
+
+      EasyStalk::Client.default.consumer.with do |conn|
+        expect(conn.tubes['foo'].peek(:buried)).to be_nil
       end
     end
   end
