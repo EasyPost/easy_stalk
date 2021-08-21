@@ -90,6 +90,8 @@ EasyStalk::Consumer = Struct.new(:job) do
   end
 
   def on_error(exception)
+    return if job.finished?
+
     job.retries < self.class.retry_limit ? retry_job : bury_job
   end
 
