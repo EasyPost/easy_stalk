@@ -120,4 +120,27 @@ RSpec.describe 'produce and consume', :integration, :slow do
       end
     end
   end
+
+  context 'enqueues itself' do
+    let!(:consumer) do
+      Class.new(EasyStalk::Consumer) do
+        assign 'foo'
+        self.retry_limit = 3
+
+        def call
+          self.class.jobs << [job.body, releases: job.releases]
+        end
+      end
+    end
+
+    specify 'retries the specified amount and then buries' do
+      consumer.enqueue
+      Timeout.timeout(1) { worker.value } rescue Timeout::Error
+      dispatcher.shutdown!
+
+      EasyStalk::Client.default.consumer.with do |conn|
+        expect(conn.tubes['foo'].peek(:buried)).to be_nil
+      end
+    end
+  end
 end

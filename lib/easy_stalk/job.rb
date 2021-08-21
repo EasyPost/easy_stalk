@@ -16,10 +16,19 @@ class EasyStalk::Job < Struct.new(:client, :job, :tube, :body, :finished, :burie
     JSON.dump(body.to_h)
   end
 
-  def initialize(job, client: EasyStalk::Client.default)
-    body = job.body.nil? ? nil : JSON.parse(job.body)
+  def self.decode(body)
+    body.nil? ? nil : JSON.parse(body)
+  end
 
-    super(client, job, job.tube, body, false, false)
+  def initialize(job, client: EasyStalk::Client.default)
+    super(
+      client,
+      job,
+      job.tube,
+      self.class.decode(job.body),
+      false,
+      false
+    )
   end
 
   def delayed_release(delay: ExponentialBackoff)

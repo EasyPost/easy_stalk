@@ -41,13 +41,13 @@ EasyStalk::Consumer = Struct.new(:job) do
     attr_writer :retry_limit
 
     def enqueue(
-      data,
+      data = nil,
       client: EasyStalk::Client.default,
-      priority: self.class.priority,
-      time_to_run: self.class.time_to_run,
-      delay: self.class.delay,
+      priority: self.priority,
+      time_to_run: self.time_to_run,
+      delay: self.delay,
       delay_until: nil,
-      tube: self.class.default_tube
+      tube: tubes.first
     )
       if delay_until
         raise ArgumentError, 'cannot specify delay and delay_until' if delay
@@ -67,7 +67,7 @@ EasyStalk::Consumer = Struct.new(:job) do
     end
 
     def serialize(data)
-      EasyStalk::MethodDelegator.serialize(data, specification: method(:call))
+      EasyStalk::MethodDelegator.serialize(data, format: instance_method(:call))
     end
 
     def call(job)
