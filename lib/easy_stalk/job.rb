@@ -3,12 +3,15 @@
 class EasyStalk::Job < Struct.new(:client, :job, :tube, :body, :finished, :buried)
   AlreadyFinished = Class.new(StandardError)
 
-  ExponentialBackoff = lambda { |releases:|
-    backoff = ((3**(releases + 1)) / 2) * 60
-    jitter = rand(0..backoff / 3)
+  ExponentialBackoff = Struct.new(:base, :factor, :jitter) do
+    def call(releases:)
+      backoff = factor * base**(releases + 1)
 
-    backoff + jitter
-  }
+      backoff + rand(0..(backoff * jitter))
+    end
+  end
+
+  DEFAULT_DELAY = ExponentialBackoff.new(3, 3, 0.5)
 
   def self.encode(body)
     raise TypeError, "cannot serialize #{body.class} to a Hash" unless body.respond_to?(:to_h)
@@ -27,11 +30,11 @@ class EasyStalk::Job < Struct.new(:client, :job, :tube, :body, :finished, :burie
       job.tube,
       self.class.decode(job.body),
       false,
-      false
+      false,
     )
   end
 
-  def delayed_release(delay: ExponentialBackoff)
+  def delayed_release(delay: DEFAULT_DELAY)
     delay_seconds = delay.respond_to?(:call) ? delay.call(releases: releases) : delay
     finish { client.release(job, delay: delay_seconds) }
   end
@@ -56,16 +59,14 @@ class EasyStalk::Job < Struct.new(:client, :job, :tube, :body, :finished, :burie
     finish { client.complete(job) }
   end
 
-  attr_reader :finished
+  attr_reader :finished, :buried
   alias finished? finished
-  attr_reader :buried
   alias dead? buried
   alias buried? buried
 
   protected
 
-  attr_writer :finished
-  attr_writer :buried
+  attr_writer :finished, :buried
 
   def finish
     raise AlreadyFinished if finished

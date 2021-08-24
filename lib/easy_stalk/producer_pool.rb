@@ -5,6 +5,11 @@ EasyStalk::ProducerPool = Class.new(SimpleDelegator) do
     @default ||= new
   end
 
+  attr_reader :max_age
+  attr_reader :servers
+  attr_reader :size
+  attr_reader :timeout
+
   def initialize(
     servers: EasyStalk.servers.shuffle.to_enum.cycle,
     size: EasyStalk.pool_size,
@@ -13,18 +18,18 @@ EasyStalk::ProducerPool = Class.new(SimpleDelegator) do
   )
     servers = servers.to_enum unless servers.is_a?(Enumerable)
 
-    @servers = servers
-    @timeout = timeout
     @max_age = max_age
+    @servers = servers
     @size = size
+    @timeout = timeout
 
     super(
       create_pool(
-        size: size,
-        timeout: timeout,
         max_age: max_age,
-        servers: servers
-    ))
+        servers: servers,
+        size: size,
+        timeout: timeout
+      ))
   end
 
   protected

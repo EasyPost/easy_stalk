@@ -3,17 +3,17 @@
 EasyStalk::Test::Client = Struct.new(:ready, :delayed, :buried, :completed, :reserved) do
   include Enumerable
 
-    Job = Struct.new(
-      :body,
-      :priority,
-      :tube,
-      :time_to_run,
-      :delay,
-      :releases,
-      :client,
-      :buried,
-      :finished
-    ) do
+  Job = Struct.new(
+    :body,
+    :priority,
+    :tube,
+    :time_to_run,
+    :delay,
+    :releases,
+    :client,
+    :buried,
+    :finished
+  ) do
     alias_method :retries, :releases
     alias_method :finished?, :finished
     alias_method :buried?, :buried

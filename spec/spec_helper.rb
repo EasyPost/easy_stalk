@@ -28,8 +28,8 @@ RSpec.configure do |config|
   config.default_formatter = 'doc' if config.files_to_run.one?
   config.order = :random
   config.before { EasyStalk.tube_consumers.clear }
-  config.before(:each, :integration) do |e|
-    skip('no beanstalk configured') if !ENV.key?('BEANSTALKD_URLS')
+  config.before(:each, :integration) do |_e|
+    skip('no beanstalk configured') unless ENV.key?('BEANSTALKD_URLS')
   end
 
   Kernel.srand config.seed

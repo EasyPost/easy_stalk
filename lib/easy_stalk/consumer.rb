@@ -89,7 +89,7 @@ EasyStalk::Consumer = Struct.new(:job) do
     raise NotImplementedError
   end
 
-  def on_error(exception)
+  def on_error(_exception)
     return if job.finished?
 
     job.retries < self.class.retry_limit ? retry_job : bury_job

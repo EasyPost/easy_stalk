@@ -44,14 +44,14 @@ RSpec.describe EasyStalk::Job do
     subject(:delayed_release) { job.delayed_release }
 
     specify do
-      expect { delayed_release }.to change(client, :delayed).to(payload => be_within(20).of(60))
+      expect { delayed_release }.to change(client, :delayed).to(payload => be_within(3).of(11))
     end
 
     context 'twice' do
       before { payload.releases += 1 }
 
       specify do
-        expect { delayed_release }.to change(client, :delayed).to(payload => be_within(80).of(240))
+        expect { delayed_release }.to change(client, :delayed).to(payload => be_within(10).of(35))
       end
     end
 
@@ -59,7 +59,7 @@ RSpec.describe EasyStalk::Job do
       before { payload.releases += 2 }
 
       specify do
-        expect { delayed_release }.to change(client, :delayed).to(payload => be_within(260).of(780))
+        expect { delayed_release }.to change(client, :delayed).to(payload => be_within(45).of(100))
       end
     end
 

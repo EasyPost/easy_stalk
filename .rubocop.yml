@@ -35,4 +35,5 @@ Style/StructInheritance:
   Enabled: false
 
 Lint/SuppressedException:
-  Exclude: spec/**/*
+  Exclude:
+  - spec/**/*

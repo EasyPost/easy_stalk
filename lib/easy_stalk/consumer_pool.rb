@@ -18,7 +18,7 @@ EasyStalk::ConsumerPool = Class.new(SimpleDelegator) do
     servers: EasyStalk.servers.shuffle.to_enum.cycle,
     timeout: 5, # seconds
     max_age: EasyStalk.connection_max_age
-    )
+  )
     servers = servers.to_enum unless servers.is_a?(Enumerable)
 
     @servers = servers
