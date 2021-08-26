@@ -1,2 +1,6 @@
-require_relative 'test/job'
-require_relative 'test/immediate_job_runner'
+# frozen_string_literal: true
+
+module EasyStalk::Test
+  require_relative 'test/client'
+  require_relative 'test/inline_client'
+end
