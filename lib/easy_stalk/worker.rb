@@ -28,6 +28,8 @@ module EasyStalk
 
       pool = EasyStalk::Client.create_worker_pool(tube_class_hash.keys)
 
+      jobs_since_gc = 0
+
       while !@cancelled
         pool.with do |beanstalk|
           job = get_one_job(beanstalk)
@@ -50,6 +52,13 @@ module EasyStalk
           else
             # Job Succeeded!
             job.delete
+          end
+          jobs_since_gc += 1
+          if EasyStalk.configuration.worker_gc_interval > 0
+            if jobs_since_gc > EasyStalk.configuration.worker_gc_interval
+              GC.start
+              jobs_since_gc = 0
+            end
           end
         end
       end

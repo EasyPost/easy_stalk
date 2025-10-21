@@ -1,5 +1,10 @@
 # Changelog
 
+## Next
+
+ - Periodically do a full GC in workers (configured by the `$BEANSTALKD_WORKER_GC_INTERVAL` environment variable or the
+   `worker_gc_interval` configuration option; set to 0 to disable this functionality)
+
 ## 0.1.3 (2018-12-06)
 
  - Fixed bug where subclasses of EasyStalk::Job could not be used as an Abstract Base Class
