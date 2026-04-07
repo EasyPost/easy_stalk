@@ -1,7 +1,7 @@
 ## These are the standard rules for all EasyPost public repositories.
 ##
 
-* @EasyPost/easypost-public-maintainers
+* @EasyPost/dev-tools
 
 # The devtools team owns the codeowners file, this is for auditing purposes
 .github/CODEOWNERS @easypost/dev-tools
